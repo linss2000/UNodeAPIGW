@@ -8,57 +8,18 @@ const DBase = require('./api/mssql');
 const stream = require('stream');
 const _ = require('lodash');
 const fs = require('fs');
+const fetch = require('node-fetch');
+const axios = require('axios');
 
 const mongoose = require('mongoose');
 mongoose.connect("mongodb://hvs:hvs@cluster0-shard-00-00-zq0f1.mongodb.net:27017,cluster0-shard-00-01-zq0f1.mongodb.net:27017,cluster0-shard-00-02-zq0f1.mongodb.net:27017/hvs?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin");
 var conn = mongoose.connection;
+
 const multer = require('multer');
 const GridFsStorage = require('multer-gridfs-storage');
 const Grid = require('gridfs-stream');
 Grid.mongo = mongoose.mongo;
 const gfs = Grid(conn.db);
-
-
-/*
-var MongoClient = require('mongodb').MongoClient,
-    assert = require('assert');
-
-// Connection URL
-var url = 'mongodb://hvs:hvs@cluster0-shard-00-00-zq0f1.mongodb.net:27017,cluster0-shard-00-01-zq0f1.mongodb.net:27017,cluster0-shard-00-02-zq0f1.mongodb.net:27017/hvs?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin';
-// Use connect method to connect to the Server
-MongoClient.connect(url, function(err, db) {
-    //assert.equal(null, err);
-    console.log("Connected correctly to server");
-    var query = {
-        //"category_code": "biotech"
-    };
-
-    gfs.collection('ctFiles'); //set collection name to lookup into
-
-    // First check if file exists
-    gfs.files.find({}).toArray(function(err, files) {
-        console.log("in gfs")
-        if (!files || files.length === 0) {
-            console.log("no files");
-        }
-
-        files.forEach(function(file) {
-            console.log("File Name: " + file.metadata.originalname);
-        });
-    });
-
-    //// *
-    db.collection('ctFiles').find(query).toArray(function(err, docs) {
-        //assert.equal(err, null);
-        //assert.notEqual(docs.length, 0);
-        docs.forEach(function(doc) {
-            console.log("File Name" + doc.metadata.originalname);
-        });
-    });
-    /// * /
-    db.close();
-});
-*/
 
 const ExtractJwt = passportJWT.ExtractJwt;
 const JwtStrategy = passportJWT.Strategy;
@@ -82,19 +43,22 @@ jwtOptions.secretOrKey = 'tasmanianDevil';
 
 var strategy = new JwtStrategy(jwtOptions, function (jwt_payload, next) {
     console.log('payload received', jwt_payload);
+    next(null, true);
+    /*
     // usually this would be a database call:
-    var user = users[_.findIndex(users, { id: jwt_payload.id })];
+    var user = users[_.findIndex(users, { id: jwt_payload.userId })];
     if (user) {
         next(null, user);
     } else {
         next(null, false);
     }
+    */
 });
 
 passport.use(strategy);
 
 //const env = require("env.js");
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3003;
 const http = require('http');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -114,19 +78,16 @@ app.use('*', function (req, res, next) {
     res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept,Authorization,Access-Control-Allow-Origin,Access-Control-Allow-Credentials");
     res.header("Access-Control-Allow-Credentials", true);
-    res.header("Transfer-Encoding", "chunked");
+    //res.header("Transfer-Encoding", "chunked");
     //res.header("Content-Type", "text/plain");
     //res.header("Content-Type", "application/json");
     res.io = app.io;
     //res.header("Accept", "q=0.8;application/json;q=0.9"); ,
     //res.header("Connection", "keep-alive");
     console.log('Time:', Date.now())
+    //console.log(await getURLs('db'));
     next()
 });
-
-
-
-
 
 // Socket.io
 //const io = socket_io().listen(server);
@@ -154,6 +115,31 @@ var storage = GridFsStorage({
 var upload = multer({ //multer settings for single upload
     storage: storage
 }).single('file');
+
+async function getURLs(svcName) {
+    try {
+        var result = await DBase.DB.execSQl("select gs_name, gs_url from tAPIURL")
+        var resultObj = JSON.parse(result);
+        console.log(resultObj.data[0]);
+        var results = _.filter(resultObj.data[0], function (obj) {
+            console.log(obj.gs_name)
+            return obj.gs_name.indexOf(svcName) !== -1;
+        });
+
+        //var retObj = JSON.parse(results)
+        ///console.log(results);
+        //console.log(results[0].gs_url);
+        //console.log(resultObj)
+        return results[0].gs_url;
+        //resultObj = JSON.parse(result);
+        //console.log("After Title Call")
+        //let gs_ttl_i = resultObj.data[0][0].gs_ttl_i;
+    } catch (err) {
+        return err;
+        //response.send(err); 
+    }
+}
+
 
 
 async function getData() {
@@ -501,15 +487,27 @@ app.post("/reactlogin", async function (req, res) {
 
 app.io = io.sockets.on('connection', function (socket) {
     console.log('a user connected')
+    //send Ping to client connection
+    socket.emit('ping', { type: 'INCOMING_PONG_PAYLOAD', payload: 'ping from server' });
 
     // receive from client (index.ejs) with socket.on
     socket.on('add-message', function (msg) {
-        console.log('new message: ' + msg)
+        console.log('new add message: ' + msg)
         // send to client (index.ejs) with app.io.emit
         // here it reacts direct after receiving a message from the client
-        app.io.emit('chat-message', msg);
+        //app.io.emit('chat-message', msg);
+    })
+
+    socket.on('pong-message', function (data) {
+        console.log('new pong message: ' + data)
+        //socket.emit('ping', { type: 'INCOMING_PONG_PAYLOAD', payload: 'pong response from server' });
+        // send to client (index.ejs) with app.io.emit
+        // here it reacts direct after receiving a message from the client
+        //app.io.emit('chat-message', msg);
     })
 })
+
+
 /*
 //start listen with socket.io
 app.io.on('connection', function(socket) {
@@ -535,6 +533,135 @@ app.io.on('connection', function(socket) {
 })
 */
 
+app.post("/toLoadSvc", passport.authenticate('jwt', { session: false }), function (req, res) {
+    try {
+        console.log(req.get('Authorization'))
+        var token = req.get('Authorization');
+
+        token = token.toString().replace("JWT ", "")
+        var originalDecoded = jwt.decode(token, { complete: true });
+        console.log(JSON.stringify(originalDecoded));
+
+        var refreshed = jwt.refresh(originalDecoded, 300, jwtOptions.secretOrKey);
+        // new 'exp' value is later in the future. 
+        console.log(JSON.stringify(jwt.decode(refreshed, { complete: true })));
+        var output = JSON.stringify({ "message": "token refreshed", "token": refreshed, "result": 0 });
+        res.status(200).json(output);
+        //res.status(200).json({ "message": "Success! You can not see this without a token" });
+    } catch (e) {
+        console.log("error")
+        console.log(e)
+        var output = JSON.stringify({ "message": e, "token": null, "result": 0 });
+        res.status(200).json(output);
+    }
+});
+
+
+app.post("/loginsvc", async function (req, res) {
+    var result;
+
+    try {
+        var url = await getURLs('logon');
+        console.log(url);
+
+        var name;
+        var password;
+
+        if (req.body.usr && req.body.pwd) {
+            name = req.body.usr;
+            password = req.body.pwd;
+        }
+
+        console.log(name)
+        console.log(password)
+
+        var parms = JSON.stringify({
+            usr: name,
+            pwd: password
+        });
+
+        const data = await fetch(url, {
+            method: 'POST',
+            body: parms,
+            headers: { 'Content-Type': 'application/json' },
+            //headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+            //headers: { 'Content-Type': 'application/json',
+            //'Content-Length': parms.length    
+        })
+
+        result = await data.json();
+
+    } catch (e) {
+        res.status(500).end();
+    }
+
+    console.log(result)
+    console.log(JSON.parse(result).message)
+
+    if (JSON.parse(result).message == "ok") {
+        var payload = { userId: name, role: "read" };
+        var token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '1h' }); // '1h'
+        console.log(token)
+
+        var output = JSON.stringify({ "message": "ok", "token": token, "result":JSON.parse(result).result});
+        res.status(200).json(output);
+
+    } else {
+        var output = JSON.stringify({ "message": "User Id/ password doesn't exists", "result": "-1" });
+        res.status(200).json(output);
+    }
+    //res.send(result);
+    console.log(result);
+
+    //res.status(200).send(JSON.stringify({ data:result }));
+    /*
+    axios.post(url,{                
+        SQL: 'select * from ttlol'
+        })
+        .then(function (response) {
+            console.log(response.data.data);
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+
+        */
+    /*
+    request.post({
+        url: url,
+        json: true,
+        headers: {
+            "content-type": "application/json",
+        },
+        body: parms        
+      }, function(error, response, body){
+      console.log(body);
+    });
+    */
+    //var body = { SQL: 'select * from ttlol'};
+    //const result = await 
+    /*
+    if (headers['transfer-encoding'] === 'chunked') {
+        delete headers['content-length'];
+    }
+    */
+    /*
+    request(url, { 
+        method: 'POST',
+        body:   {parms},
+        headers: { 'Content-Type':'application/json'}, 
+        //headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+        //headers: { 'Content-Type': 'application/json',
+        //'Content-Length': parms.length    
+    })
+    .then(res => res.json())
+    .then(json => console.log(json))
+    .catch(err => {console.log(err);});
+    */
+
+    //console.log(result);
+    //res.status(200).send("Called DB Service");
+});
 
 app.post("/login", async function (req, res) {
     //console.log("in")
@@ -596,6 +723,216 @@ app.post("/secret", passport.authenticate('jwt', { session: false }), function (
     var output = JSON.stringify({ "message": "ok", "token": refreshed, "result": 0 });
     res.status(200).json(output);
     //res.status(200).json({ "message": "Success! You can not see this without a token" });
+});
+
+async function getUserAsync(username) {
+    const res = await fetch('https://api.github.com/users/' + username);
+    return { user: await res.json(), found: res.status === 200 };
+}
+
+async function getObjectAsync(url) {
+    return (await fetch(url)).json();
+}
+
+app.get('/api/async-await/users/:username', async (req, res) => {
+    try {
+        const { username } = req.params;
+        const userResult = await getUserAsync(username);
+
+        if (!userResult.found) {
+            res.status(404).end();
+            return;
+        }
+
+        const { user } = userResult;
+        const { repos_url, followers_url } = user;
+        const [repos, followers] =
+            await Promise.all([getObjectAsync(repos_url), getObjectAsync(followers_url)]);
+
+        user.repos = repos;
+        user.followers = followers;
+
+        res.send(user);
+    } catch (e) {
+        res.status(500).end();
+    }
+});
+
+app.post("/dbas", async function (req, res) {
+    var result;
+
+    try {
+        var url = await getURLs('db');
+        console.log(url);
+
+        var sql = req.body.SQL;
+        console.log(sql);
+
+        var p = ""
+        var parms = JSON.stringify({
+            SQL: sql
+        });
+
+        const data = await fetch(url, {
+            method: 'POST',
+            body: parms,
+            headers: { 'Content-Type': 'application/json' },
+            //headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+            //headers: { 'Content-Type': 'application/json',
+            //'Content-Length': parms.length    
+        })
+
+        result = await data.json();
+
+    } catch (e) {
+        res.status(500).end();
+    }
+    /*
+    .then(res => res.json())
+    .then(json => {
+        console.log(json.data[0]);        
+        }
+    )
+    .catch(err => {console.log(err);});
+    */
+
+    //res.send(result);
+    console.log(result);
+    res.status(200).send(JSON.stringify({ data: result }));
+    /*
+    axios.post(url,{                
+        SQL: 'select * from ttlol'
+        })
+        .then(function (response) {
+            console.log(response.data.data);
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+
+        */
+    /*
+    request.post({
+        url: url,
+        json: true,
+        headers: {
+            "content-type": "application/json",
+        },
+        body: parms        
+      }, function(error, response, body){
+      console.log(body);
+    });
+    */
+    //var body = { SQL: 'select * from ttlol'};
+    //const result = await 
+    /*
+    if (headers['transfer-encoding'] === 'chunked') {
+        delete headers['content-length'];
+    }
+    */
+    /*
+    request(url, { 
+        method: 'POST',
+        body:   {parms},
+        headers: { 'Content-Type':'application/json'}, 
+        //headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+        //headers: { 'Content-Type': 'application/json',
+        //'Content-Length': parms.length    
+    })
+    .then(res => res.json())
+    .then(json => console.log(json))
+    .catch(err => {console.log(err);});
+    */
+
+    //console.log(result);
+    //res.status(200).send("Called DB Service");
+});
+
+
+
+app.get("/db", async function (req, res) {
+    var result;
+
+    try {
+        var url = await getURLs('db');
+        console.log(url);
+
+        var p = ""
+        var parms = JSON.stringify({
+            SQL: 'select * from ttlol'
+        });
+
+        const data = await fetch(url, {
+            method: 'POST',
+            body: parms,
+            headers: { 'Content-Type': 'application/json' },
+            //headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+            //headers: { 'Content-Type': 'application/json',
+            //'Content-Length': parms.length    
+        })
+
+        result = await data.json();
+
+    } catch (e) {
+        res.status(500).end();
+    }
+    /*
+    .then(res => res.json())
+    .then(json => {
+        console.log(json.data[0]);        
+        }
+    )
+    .catch(err => {console.log(err);});
+    */
+
+    res.send(result);
+    /*
+    axios.post(url,{                
+        SQL: 'select * from ttlol'
+        })
+        .then(function (response) {
+            console.log(response.data.data);
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+
+        */
+    /*
+    request.post({
+        url: url,
+        json: true,
+        headers: {
+            "content-type": "application/json",
+        },
+        body: parms        
+      }, function(error, response, body){
+      console.log(body);
+    });
+    */
+    //var body = { SQL: 'select * from ttlol'};
+    //const result = await 
+    /*
+    if (headers['transfer-encoding'] === 'chunked') {
+        delete headers['content-length'];
+    }
+    */
+    /*
+    request(url, { 
+        method: 'POST',
+        body:   {parms},
+        headers: { 'Content-Type':'application/json'}, 
+        //headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+        //headers: { 'Content-Type': 'application/json',
+        //'Content-Length': parms.length    
+    })
+    .then(res => res.json())
+    .then(json => console.log(json))
+    .catch(err => {console.log(err);});
+    */
+
+    //console.log(result);
+    //res.status(200).send("Called DB Service");
 });
 
 app.get("/secretDebug",
