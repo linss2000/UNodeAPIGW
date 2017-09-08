@@ -39,7 +39,8 @@
     "save": "^2.3.0",
     "typescript": "^2.1.4",
     "typings": "^2.1.0",
-    "username": "^2.3.0"
+    "username": "^2.3.0",
+    "uuid": "^3.1.0"
   },
   "devDependencies": {
     "@types/node": "^7.0.12"

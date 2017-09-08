@@ -69,19 +69,40 @@ var users = [{
 var jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader();
 jwtOptions.secretOrKey = 'tasmanianDevil';
-var strategy = new JwtStrategy(jwtOptions, function (jwt_payload, next) {
-    console.log('payload received', jwt_payload);
-    next(null, true);
-    /*
-    // usually this would be a database call:
-    var user = users[_.findIndex(users, { id: jwt_payload.userId })];
-    if (user) {
-        next(null, user);
-    } else {
-        next(null, false);
-    }
-    */
-});
+var strategy = new JwtStrategy(jwtOptions, function (jwt_payload, next) { return __awaiter(_this, void 0, void 0, function () {
+    var tmpData, resultObj, parm, e_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                console.log('payload received', jwt_payload);
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, , 4]);
+                parm = [];
+                parm[0] = jwt_payload.authID;
+                return [4 /*yield*/, DBase.DB.execSP("sps_checktoken", parm)];
+            case 2:
+                tmpData = _a.sent();
+                //console.log(tmpData)
+                resultObj = JSON.parse(tmpData);
+                console.log(resultObj.data[0]);
+                console.log(resultObj.data[0][0].validToken);
+                return [3 /*break*/, 4];
+            case 3:
+                e_1 = _a.sent();
+                console.log(e_1);
+                return [3 /*break*/, 4];
+            case 4:
+                if (resultObj.data[0][0].validToken == "Y") {
+                    next(null, true);
+                }
+                else {
+                    next(null, false);
+                }
+                return [2 /*return*/];
+        }
+    });
+}); });
 passport.use(strategy);
 //const env = require("env.js");
 var PORT = process.env.PORT || 3003;
@@ -554,7 +575,7 @@ app.post("/toLoadSvc", passport.authenticate('jwt', { session: false }), functio
 });
 app.post("/loginsvc", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, url, name, password, parms, data, e_1, payload, token, output, output;
+        var result, url, name, password, parms, data, e_2, uuidv4, authId, payload, token, parm, tmpData, e_3, output, output;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -585,23 +606,42 @@ app.post("/loginsvc", function (req, res) {
                     result = _a.sent();
                     return [3 /*break*/, 5];
                 case 4:
-                    e_1 = _a.sent();
+                    e_2 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 5];
                 case 5:
                     console.log(result);
                     console.log(JSON.parse(result).message);
-                    if (JSON.parse(result).message == "ok") {
-                        payload = { userId: name, role: "read" };
-                        token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '1h' });
-                        console.log(token);
-                        output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result });
-                        res.status(200).json(output);
-                    }
-                    else {
-                        output = JSON.stringify({ "message": "User Id/ password doesn't exists", "result": "-1" });
-                        res.status(200).json(output);
-                    }
+                    if (!(JSON.parse(result).message == "ok")) return [3 /*break*/, 10];
+                    uuidv4 = require('uuid/v4');
+                    authId = uuidv4();
+                    payload = { userId: name, role: "read", authID: authId };
+                    token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '1h' });
+                    console.log(token);
+                    _a.label = 6;
+                case 6:
+                    _a.trys.push([6, 8, , 9]);
+                    parm = [];
+                    parm[0] = token;
+                    parm[1] = name;
+                    parm[2] = authId;
+                    return [4 /*yield*/, DBase.DB.execSP("spi_taccesstoken", parm)];
+                case 7:
+                    tmpData = _a.sent();
+                    return [3 /*break*/, 9];
+                case 8:
+                    e_3 = _a.sent();
+                    console.log(e_3);
+                    return [3 /*break*/, 9];
+                case 9:
+                    output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result });
+                    res.status(200).json(output);
+                    return [3 /*break*/, 11];
+                case 10:
+                    output = JSON.stringify({ "message": "User Id/ password doesn't exists", "result": "-1" });
+                    res.status(200).json(output);
+                    _a.label = 11;
+                case 11:
                     //res.send(result);
                     console.log(result);
                     return [2 /*return*/];
@@ -692,7 +732,7 @@ function getObjectAsync(url) {
     });
 }
 app.get('/api/async-await/users/:username', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
-    var username, userResult, user, repos_url, followers_url, _a, repos, followers, e_2;
+    var username, userResult, user, repos_url, followers_url, _a, repos, followers, e_4;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -715,7 +755,7 @@ app.get('/api/async-await/users/:username', function (req, res) { return __await
                 res.send(user);
                 return [3 /*break*/, 4];
             case 3:
-                e_2 = _b.sent();
+                e_4 = _b.sent();
                 res.status(500).end();
                 return [3 /*break*/, 4];
             case 4: return [2 /*return*/];
@@ -724,7 +764,7 @@ app.get('/api/async-await/users/:username', function (req, res) { return __await
 }); });
 app.post("/dbas", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, url, sql, p, parms, data, e_3;
+        var result, url, sql, p, parms, data, e_5;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -751,7 +791,7 @@ app.post("/dbas", function (req, res) {
                     result = _a.sent();
                     return [3 /*break*/, 5];
                 case 4:
-                    e_3 = _a.sent();
+                    e_5 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 5];
                 case 5:
@@ -773,7 +813,7 @@ app.post("/dbas", function (req, res) {
 });
 app.get("/db", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, url, p, parms, data, e_4;
+        var result, url, p, parms, data, e_6;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -798,7 +838,7 @@ app.get("/db", function (req, res) {
                     result = _a.sent();
                     return [3 /*break*/, 5];
                 case 4:
-                    e_4 = _a.sent();
+                    e_6 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 5];
                 case 5:

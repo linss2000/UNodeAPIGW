@@ -41,9 +41,31 @@ jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader();
 jwtOptions.secretOrKey = 'tasmanianDevil';
 
 
-var strategy = new JwtStrategy(jwtOptions, function (jwt_payload, next) {
+var strategy = new JwtStrategy(jwtOptions, async (jwt_payload, next) => {
     console.log('payload received', jwt_payload);
-    next(null, true);
+    const tmpData, resultObj;
+    //Log the token in database
+    try {
+        var parm = [];        
+        parm[0] = jwt_payload.authID;
+
+        tmpData = await DBase.DB.execSP("sps_checktoken", parm);
+        //console.log(tmpData)
+         resultObj = JSON.parse(tmpData);
+        console.log(resultObj.data[0]);
+        console.log(resultObj.data[0][0].validToken);
+
+    } catch (e) {
+        console.log(e)
+        //res.status(500).end();
+    }
+
+    if(resultObj.data[0][0].validToken == "Y") {
+        next(null, true);
+    } else {
+        next(null, false);
+    }
+    
     /*
     // usually this would be a database call:
     var user = users[_.findIndex(users, { id: jwt_payload.userId })];
@@ -599,11 +621,31 @@ app.post("/loginsvc", async function (req, res) {
     console.log(JSON.parse(result).message)
 
     if (JSON.parse(result).message == "ok") {
-        var payload = { userId: name, role: "read" };
+
+        const uuidv4 = require('uuid/v4');
+        const authId = uuidv4(); // ⇨ 'df7cca36-3d7a-40f4-8f06-ae03cc22f045'
+
+        var payload = { userId: name, role: "read", authID: authId };
         var token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '1h' }); // '1h'
         console.log(token)
 
-        var output = JSON.stringify({ "message": "ok", "token": token, "result":JSON.parse(result).result});
+        //Log the token in database
+        try {
+            const parm = [];
+            parm[0] = token;
+            parm[1] = name;
+            parm[2] = authId;
+
+            const tmpData = await DBase.DB.execSP("spi_taccesstoken", parm);
+            //console.log(tmpData)
+            //console.log(tmpData.data[0].hv_auth_code)
+
+        } catch (e) {
+            console.log(e)
+            //res.status(500).end();
+        }
+
+        var output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result });
         res.status(200).json(output);
 
     } else {
