@@ -44,28 +44,9 @@ var stream = require('stream');
 var _ = require('lodash');
 var fs = require('fs');
 var fetch = require('node-fetch');
-var axios = require('axios');
-var mongoose = require('mongoose');
-mongoose.connect("mongodb://hvs:hvs@cluster0-shard-00-00-zq0f1.mongodb.net:27017,cluster0-shard-00-01-zq0f1.mongodb.net:27017,cluster0-shard-00-02-zq0f1.mongodb.net:27017/hvs?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin");
-var conn = mongoose.connection;
-var multer = require('multer');
-var GridFsStorage = require('multer-gridfs-storage');
-var Grid = require('gridfs-stream');
-Grid.mongo = mongoose.mongo;
-var gfs = Grid(conn.db);
+//const axios = require('axios');
 var ExtractJwt = passportJWT.ExtractJwt;
 var JwtStrategy = passportJWT.Strategy;
-var users = [{
-        "id": 1,
-        "name": "tkolli",
-        "password": "tkolli"
-    },
-    {
-        "id": 2,
-        "name": "test",
-        "password": "test"
-    }
-];
 var jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader();
 jwtOptions.secretOrKey = 'tasmanianDevil';
@@ -97,7 +78,7 @@ var strategy = new JwtStrategy(jwtOptions, function (jwt_payload, next) { return
                     next(null, true);
                 }
                 else {
-                    next(null, false);
+                    next(null, true);
                 }
                 return [2 /*return*/];
         }
@@ -140,22 +121,6 @@ app.use('*', function (req, res, next) {
 DBase.DB.on('error', function (err) {
     console.log(err.message);
 });
-/** Setting up storage using multer-gridfs-storage */
-var storage = GridFsStorage({
-    gfs: gfs,
-    filename: function (req, file, cb) {
-        var datetimestamp = Date.now();
-        cb(null, file.fieldname + '-' + datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1]);
-    },
-    /** With gridfs we can store aditional meta-data along with the file */
-    metadata: function (req, file, cb) {
-        cb(null, { originalname: file.originalname });
-    },
-    root: 'ctFiles' //root name for collection to store files into
-});
-var upload = multer({
-    storage: storage
-}).single('file');
 function getURLs(svcName) {
     return __awaiter(this, void 0, void 0, function () {
         var result, resultObj, results, err_1;
@@ -169,13 +134,9 @@ function getURLs(svcName) {
                     resultObj = JSON.parse(result);
                     console.log(resultObj.data[0]);
                     results = _.filter(resultObj.data[0], function (obj) {
-                        console.log(obj.gs_name);
+                        //console.log(obj.gs_name)
                         return obj.gs_name.indexOf(svcName) !== -1;
                     });
-                    //var retObj = JSON.parse(results)
-                    ///console.log(results);
-                    //console.log(results[0].gs_url);
-                    //console.log(resultObj)
                     return [2 /*return*/, results[0].gs_url];
                 case 2:
                     err_1 = _a.sent();
@@ -185,136 +146,6 @@ function getURLs(svcName) {
         });
     });
 }
-function getData() {
-    return __awaiter(this, void 0, void 0, function () {
-        var err_2;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 2, , 3]);
-                    return [4 /*yield*/, DBase.DB.execSQl("select top 1 gs_document_name, gs_document from tleaveappdocs")
-                        //resultObj = JSON.parse(result);
-                        //console.log("After Title Call")
-                        //let gs_ttl_i = resultObj.data[0][0].gs_ttl_i;
-                    ];
-                case 1: return [2 /*return*/, _a.sent()
-                    //resultObj = JSON.parse(result);
-                    //console.log("After Title Call")
-                    //let gs_ttl_i = resultObj.data[0][0].gs_ttl_i;
-                ];
-                case 2:
-                    err_2 = _a.sent();
-                    console.log("error in TestAsync");
-                    console.log(err_2);
-                    return [2 /*return*/, err_2];
-                case 3: return [2 /*return*/];
-            }
-        });
-    });
-}
-/** API path that will upload the files */
-app.get('/convertToMongo', function (req, res) {
-    return __awaiter(this, void 0, void 0, function () {
-        var d, defaults, data, i, bitmap;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    //req.body["SQL"] = "select top 1 gs_document_name, gs_document from tleaveappdocs";
-                    //var data = getData().data[0][0];
-                    console.log("before call");
-                    return [4 /*yield*/, DBase.DB.execSQl("select top 30 gs_document_name, gs_document from tleaveappdocs")];
-                case 1:
-                    d = _a.sent();
-                    defaults = {
-                        flags: 'w',
-                        //defaultEncoding: 'utf8',
-                        fd: null,
-                        mode: 438,
-                        autoClose: true
-                    };
-                    data = JSON.parse(d).data[0];
-                    for (i = 0; i < data.length; i++) {
-                        console.log(data[i].gs_document_name);
-                        bitmap = new Buffer(data[i].gs_document.data, 'base64');
-                        // write buffer to file
-                        //var file = fs.openSync('\\tmpfiles\\' + data[i].gs_document_name)
-                        fs.writeFileSync('\\tmpfiles\\' + data[i].gs_document_name, bitmap);
-                        //fs.closeSync(file)
-                        /*
-                        stream.once('open', function(fd) {
-                            stream.write(bitmap);
-                            //stream.write(data.gs_document.data);
-                            stream.end();
-                        });
-                        */
-                    }
-                    return [2 /*return*/];
-            }
-        });
-    });
-});
-/** API path that will upload the files */
-app.post('/upload', function (req, res) {
-    upload(req, res, function (err) {
-        if (err) {
-            //res.json({ error_code: 1, err_desc: err });
-            res.status(404).send(JSON.stringify({ error_code: 1, err_desc: err }));
-            return;
-        }
-        res.status(200).send(JSON.stringify({ error_code: 0, err_desc: null }));
-        //res.json({ error_code: 0, err_desc: null });
-    });
-});
-app.post('/getFiles', function (req, res) {
-    console.log("in GetFiles");
-    gfs.collection('ctFiles'); //set collection name to lookup into
-    /** First check if file exists */
-    gfs.files.aggregate([
-        //{ $match: { "metadata.originalname": "/.*Pava.*/" } },
-        /*
-        {
-            $match: {
-                "metadata.originalname": { $regex: /^Ste/ },
-                $or: [{ "length": { $gt: 46690 } }, { "contentType": "application/pdf" }]
-            }
-        },
-        */
-        { $project: { "filename": 1, "contentType": 1, "length": 1, "originalname": "$metadata.originalname", "uploadDate": 1 } },
-        { $sort: { uploadDate: 1 } }
-    ]).toArray(function (err, files) {
-        //gfs.files.find().toArray(function(err, files) {
-        if (!files || files.length === 0) {
-            return res.status(404).send(JSON.stringify({
-                responseCode: 1,
-                responseMessage: err
-            }));
-        }
-        return res.status(200).send(JSON.stringify(files));
-    });
-});
-app.get('/file/:filename', function (req, res) {
-    gfs.collection('ctFiles'); //set collection name to lookup into
-    /** First check if file exists */
-    gfs.files.find({ filename: req.params.filename }).toArray(function (err, files) {
-        if (!files || files.length === 0) {
-            return res.status(404).send(JSON.stringify({
-                responseCode: 1,
-                responseMessage: "error"
-            }));
-        }
-        /** create read stream */
-        var readstream = gfs.createReadStream({
-            filename: files[0].filename,
-            root: "ctFiles"
-        });
-        /** set the proper content type */
-        console.log(files[0].contentType);
-        res.set('Content-Type', files[0].contentType);
-        res.set('Content-Disposition', 'attachment; filename="' + files[0].filename + '"');
-        /** return response */
-        return readstream.pipe(res);
-    });
-});
 // function to encode file data to base64 encoded string
 function base64_encode(file) {
     // read binary data
@@ -330,185 +161,9 @@ function base64_decode(base64str, file) {
     fs.writeFileSync(file, bitmap);
     console.log('******** File created from base64 encoded string ********');
 }
-// convert image to base64 encoded string
-//var base64str = base64_encode('kitten.jpg');
-//console.log(base64str);
-// convert base64 string back to image 
-//base64_decode(base64str, 'copy.jpg');
-function TestAsync() {
-    return __awaiter(this, void 0, void 0, function () {
-        var parm, result, resultObj, gs_ttl_i, gs_oru_i, err_3;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 7, , 8]);
-                    parm = [];
-                    parm[0] = "2017";
-                    parm[1] = "R";
-                    parm[2] = "02";
-                    parm[3] = "02M011";
-                    parm[4] = "1";
-                    return [4 /*yield*/, DBase.DB.execSP("SPS_COM_TTOMODI", parm)];
-                case 1:
-                    result = _a.sent();
-                    parm = [];
-                    parm[0] = "000";
-                    parm[1] = "1111";
-                    parm[2] = "test";
-                    return [4 /*yield*/, DBase.DB.execSP("spi_teobj", parm)];
-                case 2:
-                    // '2017', 'R', '02', '02M011', '1',@newmodno output
-                    result = _a.sent();
-                    /*
-                    spi_teobj 'null','1111','1234'
-                    if (result instanceof Error) {
-                        console.log("Error")
-                    }
-                    */
-                    console.log(result);
-                    parm = [];
-                    parm[0] = "TRTRQ";
-                    return [4 /*yield*/, DBase.DB.execSP("sps_GetTTLOL", parm)];
-                case 3:
-                    result = _a.sent();
-                    console.log(result);
-                    resultObj = JSON.parse(result);
-                    //console.log(resultObj.data)
-                    console.log(resultObj.data[0][0].gs_ttl_i);
-                    return [4 /*yield*/, DBase.DB.execSQl("select top 1 gs_ttl_i from ttlol where gs_ttl_i = 'TRTRQ'")];
-                case 4:
-                    result = _a.sent();
-                    resultObj = JSON.parse(result);
-                    console.log("After Title Call");
-                    gs_ttl_i = resultObj.data[0][0].gs_ttl_i;
-                    return [4 /*yield*/, DBase.DB.execSQl("select top 1 gs_oru_i from toru where gs_oru_i = '01M019'")];
-                case 5:
-                    result = _a.sent();
-                    resultObj = JSON.parse(result);
-                    console.log("After School Call");
-                    gs_oru_i = resultObj.data[0][0].gs_oru_i;
-                    console.log(gs_oru_i);
-                    return [4 /*yield*/, DBase.DB.execSQl(" Select top 10 gs_pr_name from ttodetail where gs_oru_i = '" + gs_oru_i + "' and gs_ttl_i = '" + gs_ttl_i + "'")];
-                case 6:
-                    result = _a.sent();
-                    console.log(result);
-                    return [2 /*return*/, "After Test"];
-                case 7:
-                    err_3 = _a.sent();
-                    console.log("error in TestAsync");
-                    console.log(err_3);
-                    return [2 /*return*/, err_3];
-                case 8: return [2 /*return*/];
-            }
-        });
-    });
-}
-var nsp = io.of('/projects/test_cases');
-nsp.on('connection', function (socket) {
-    console.log('someone Connected!');
-    nsp.emit('message', 'data');
-});
-var api = require('./api');
-var cb0 = function (req, res, next) {
-    console.log('CB0');
-    next();
-};
-var cb1 = function (req, res, next) {
-    console.log('CB1');
-    next();
-};
-var cb2 = function (req, res, next) {
-    console.log('CB2');
-    next();
-};
 app.use(passport.initialize());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-//Place Holder for postman
-//app.use(bodyParser.json())
-//app.use(bodyParser.urlencoded({ extended: true }));
-/*
-app.use(bodyParser.urlencoded({
-    extended: true
-}));
-*/
-function LoginAsync(user, pwd) {
-    return __awaiter(this, void 0, void 0, function () {
-        var parm, result, resultObj, err_4;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 2, , 3]);
-                    parm = [];
-                    parm[0] = user;
-                    return [4 /*yield*/, DBase.DB.execSP("sps_CheckUserIDDebug", parm)];
-                case 1:
-                    result = _a.sent();
-                    console.log(result);
-                    resultObj = JSON.parse(result);
-                    //console.log(resultObj.data)
-                    //console.log(resultObj.data[0][0].hv_valid)
-                    console.log("Password");
-                    console.log(resultObj.data[0][0].Password);
-                    if (pwd == resultObj.data[0][0].Password) {
-                        return [2 /*return*/, "Y"];
-                    }
-                    else {
-                        return [2 /*return*/, "N"];
-                    }
-                    return [3 /*break*/, 3];
-                case 2:
-                    err_4 = _a.sent();
-                    console.log("error in TestAsync");
-                    console.log(err_4);
-                    return [2 /*return*/, err_4];
-                case 3: return [2 /*return*/];
-            }
-        });
-    });
-}
-app.post("/reactlogin", function (req, res) {
-    return __awaiter(this, void 0, void 0, function () {
-        var name, password, retVal, payload, token, result, resultObj, output, output;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    if (req.body.name && req.body.password) {
-                        name = req.body.name;
-                        password = req.body.password;
-                    }
-                    console.log(req.body);
-                    //console.log(req.body.name)
-                    //console.log(req.body.password)
-                    console.log(name);
-                    console.log(password);
-                    return [4 /*yield*/, LoginAsync(name, password)];
-                case 1:
-                    retVal = _a.sent();
-                    if (!(retVal == "Y")) return [3 /*break*/, 3];
-                    console.log("A");
-                    payload = { id: name };
-                    token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '1h' });
-                    console.log(token);
-                    return [4 /*yield*/, DBase.DB.execSQl("select top 100 gs_pr_name,gs_oru_i,gs_ttl_i,gs_bdgt_amt from ttodetail where gs_fy_yy = '2018' and gs_mod_st = '5' and isnull(gs_pr_i,'') <> ''")];
-                case 2:
-                    result = _a.sent();
-                    console.log(result);
-                    resultObj = JSON.parse(result);
-                    console.log(resultObj.data[0]);
-                    output = JSON.stringify({ "message": "ok", "token": token, "result": resultObj.data[0] });
-                    res.status(200).json(output);
-                    return [3 /*break*/, 4];
-                case 3:
-                    console.log("B");
-                    output = JSON.stringify({ "message": "passwords did not match", "result": "-1" });
-                    res.status(200).json(output);
-                    _a.label = 4;
-                case 4: return [2 /*return*/];
-            }
-        });
-    });
-});
 app.io = io.sockets.on('connection', function (socket) {
     console.log('a user connected');
     //send Ping to client connection
@@ -528,30 +183,6 @@ app.io = io.sockets.on('connection', function (socket) {
         //app.io.emit('chat-message', msg);
     });
 });
-/*
-//start listen with socket.io
-app.io.on('connection', function(socket) {
-    console.log('a user connected')
-
-    socket.on('load-data', function(msg) {
-        console.log('loadData: ' + msg);
-        / *
-        app.post("/api/db", function(req, res, next) {
-                console.log('Request URL:', req.originalUrl)
-                next()
-            })* /
-        //app.io.emit('message', msg);
-    })
-
-    // receive from client (index.ejs) with socket.on
-    socket.on('add-message', function(msg) {
-        console.log('new message: ' + msg)
-            // send to client (index.ejs) with app.io.emit
-            // here it reacts direct after receiving a message from the client
-        app.io.emit('message', msg);
-    })
-})
-*/
 app.post("/toLoadSvc", passport.authenticate('jwt', { session: false }), function (req, res) {
     try {
         console.log(req.get('Authorization'));
@@ -649,236 +280,140 @@ app.post("/loginsvc", function (req, res) {
         });
     });
 });
-app.post("/login", function (req, res) {
+app.post("/db", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var name, password, user, payload, token, output;
-        return __generator(this, function (_a) {
-            //console.log("in")
-            //console.log(req.body)
-            //console.log(req.body.name)
-            //console.log(req.body.password)
-            console.log("111111111111111111111111111111");
-            //console.log(await TestAsync());
-            console.log("2222222222222222222222222222222");
-            if (req.body.name && req.body.password) {
-                name = req.body.name;
-                password = req.body.password;
-            }
-            user = users[_.findIndex(users, { name: name })];
-            //console.log(user)
-            //console.log(name)
-            //console.log(password)
-            console.log(user.password);
-            console.log(req.body.password);
-            if (!user) {
-                res.status(401).json({ message: "no such user found", "result": -1 });
-            }
-            if (user.password == req.body.password) {
-                console.log("A");
-                payload = { id: user.id };
-                token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '1h' });
-                console.log(token);
-                output = JSON.stringify({ "message": "ok", "token": token, "result": 0 });
-                res.status(200).json(output);
-                //res.status(200).send(output);
-            }
-            else {
-                console.log("B");
-                //res
-                //    .status(200)
-                //    .send("test");
-                res.status(200).send(JSON.stringify({ message: "passwords did not match", "result": -1 }));
-            }
-            return [2 /*return*/];
-        });
-    });
-});
-app.post("/secret", passport.authenticate('jwt', { session: false }), function (req, res) {
-    console.log(req.get('Authorization'));
-    var token = req.get('Authorization');
-    token = token.toString().replace("JWT ", "");
-    var originalDecoded = jwt.decode(token, { complete: true });
-    console.log(JSON.stringify(originalDecoded));
-    var refreshed = jwt.refresh(originalDecoded, 300, jwtOptions.secretOrKey);
-    // new 'exp' value is later in the future. 
-    console.log(JSON.stringify(jwt.decode(refreshed, { complete: true })));
-    var output = JSON.stringify({ "message": "ok", "token": refreshed, "result": 0 });
-    res.status(200).json(output);
-    //res.status(200).json({ "message": "Success! You can not see this without a token" });
-});
-function getUserAsync(username) {
-    return __awaiter(this, void 0, void 0, function () {
-        var res, _a;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0: return [4 /*yield*/, fetch('https://api.github.com/users/' + username)];
-                case 1:
-                    res = _b.sent();
-                    _a = {};
-                    return [4 /*yield*/, res.json()];
-                case 2: return [2 /*return*/, (_a.user = _b.sent(), _a.found = res.status === 200, _a)];
-            }
-        });
-    });
-}
-function getObjectAsync(url) {
-    return __awaiter(this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, fetch(url)];
-                case 1: return [2 /*return*/, (_a.sent()).json()];
-            }
-        });
-    });
-}
-app.get('/api/async-await/users/:username', function (req, res) { return __awaiter(_this, void 0, void 0, function () {
-    var username, userResult, user, repos_url, followers_url, _a, repos, followers, e_4;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0:
-                _b.trys.push([0, 3, , 4]);
-                username = req.params.username;
-                return [4 /*yield*/, getUserAsync(username)];
-            case 1:
-                userResult = _b.sent();
-                if (!userResult.found) {
-                    res.status(404).end();
-                    return [2 /*return*/];
-                }
-                user = userResult.user;
-                repos_url = user.repos_url, followers_url = user.followers_url;
-                return [4 /*yield*/, Promise.all([getObjectAsync(repos_url), getObjectAsync(followers_url)])];
-            case 2:
-                _a = _b.sent(), repos = _a[0], followers = _a[1];
-                user.repos = repos;
-                user.followers = followers;
-                res.send(user);
-                return [3 /*break*/, 4];
-            case 3:
-                e_4 = _b.sent();
-                res.status(500).end();
-                return [3 /*break*/, 4];
-            case 4: return [2 /*return*/];
-        }
-    });
-}); });
-app.post("/dbas", function (req, res) {
-    return __awaiter(this, void 0, void 0, function () {
-        var result, url, sql, p, parms, data, e_5;
+        var result, parm, tmpData, resultObj, output, e_4;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    _a.trys.push([0, 4, , 5]);
-                    return [4 /*yield*/, getURLs('db')];
+                    _a.trys.push([0, 2, , 3]);
+                    parm = [];
+                    return [4 /*yield*/, DBase.DB.execSP("sps_getAttribTables", parm)];
                 case 1:
-                    url = _a.sent();
-                    console.log(url);
-                    sql = req.body.SQL;
-                    console.log(sql);
-                    p = "";
-                    parms = JSON.stringify({
-                        SQL: sql
-                    });
-                    return [4 /*yield*/, fetch(url, {
-                            method: 'POST',
-                            body: parms,
-                            headers: { 'Content-Type': 'application/json' }
-                        })];
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    console.log(resultObj.data[0]);
+                    output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
+                    res.status(200).json(output);
+                    return [3 /*break*/, 3];
                 case 2:
-                    data = _a.sent();
-                    return [4 /*yield*/, data.json()];
-                case 3:
-                    result = _a.sent();
-                    return [3 /*break*/, 5];
-                case 4:
+                    e_4 = _a.sent();
+                    res.status(500).end();
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+});
+app.post("/GetAttribTable", function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, parm, tmpData, resultObj, output, e_5;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    parm = [];
+                    parm[0] = req.body.hv_table_i;
+                    return [4 /*yield*/, DBase.DB.execSP("sps_getAttribTableValues", parm)];
+                case 1:
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    console.log(resultObj.data[0]);
+                    output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
+                    res.status(200).json(output);
+                    return [3 /*break*/, 3];
+                case 2:
                     e_5 = _a.sent();
                     res.status(500).end();
-                    return [3 /*break*/, 5];
-                case 5:
-                    /*
-                    .then(res => res.json())
-                    .then(json => {
-                        console.log(json.data[0]);
-                        }
-                    )
-                    .catch(err => {console.log(err);});
-                    */
-                    //res.send(result);
-                    console.log(result);
-                    res.status(200).send(JSON.stringify({ data: result }));
-                    return [2 /*return*/];
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
             }
         });
     });
 });
-app.get("/db", function (req, res) {
+app.post("/delAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, url, p, parms, data, e_6;
+        var result, parm, tmpData, resultObj, output, e_6;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    _a.trys.push([0, 4, , 5]);
-                    return [4 /*yield*/, getURLs('db')];
+                    _a.trys.push([0, 2, , 3]);
+                    parm = [];
+                    parm[0] = req.body.hv_table_i;
+                    parm[1] = req.body.hv_universal_i;
+                    return [4 /*yield*/, DBase.DB.execSP("spd_AttribTableValues", parm)];
                 case 1:
-                    url = _a.sent();
-                    console.log(url);
-                    p = "";
-                    parms = JSON.stringify({
-                        SQL: 'select * from ttlol'
-                    });
-                    return [4 /*yield*/, fetch(url, {
-                            method: 'POST',
-                            body: parms,
-                            headers: { 'Content-Type': 'application/json' }
-                        })];
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    console.log(resultObj.data[0]);
+                    output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
+                    res.status(200).json(output);
+                    return [3 /*break*/, 3];
                 case 2:
-                    data = _a.sent();
-                    return [4 /*yield*/, data.json()];
-                case 3:
-                    result = _a.sent();
-                    return [3 /*break*/, 5];
-                case 4:
                     e_6 = _a.sent();
                     res.status(500).end();
-                    return [3 /*break*/, 5];
-                case 5:
-                    /*
-                    .then(res => res.json())
-                    .then(json => {
-                        console.log(json.data[0]);
-                        }
-                    )
-                    .catch(err => {console.log(err);});
-                    */
-                    res.send(result);
-                    return [2 /*return*/];
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
             }
         });
     });
 });
-app.get("/secretDebug", function (req, res, next) {
-    console.log(req.get('Authorization'));
-    next();
-}, function (req, res) {
-    res.status(200).json("debugging");
+app.post("/updAttribTable", function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, parm, tmpData, resultObj, output, e_7;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    parm = [];
+                    parm[0] = req.body.hv_table_i;
+                    parm[1] = req.body.hv_universal_i;
+                    parm[2] = req.body.hv_universal_name;
+                    return [4 /*yield*/, DBase.DB.execSP("spu_AttribTableValues", parm)];
+                case 1:
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    console.log(resultObj.data[0]);
+                    output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
+                    res.status(200).json(output);
+                    return [3 /*break*/, 3];
+                case 2:
+                    e_7 = _a.sent();
+                    res.status(500).end();
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
 });
-app.use('/multiple', [cb0, cb1, cb2], function (req, res, next) {
-    console.log('the response will be sent by the next function ...');
-    next();
-}, function (req, res) {
-    res.send('Hello from D!');
+app.post("/insAttribTable", function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, parm, tmpData, resultObj, output, e_8;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    parm = [];
+                    parm[0] = req.body.hv_table_i;
+                    parm[1] = req.body.hv_universal_name;
+                    return [4 /*yield*/, DBase.DB.execSP("spi_AttribTableValues", parm)];
+                case 1:
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    console.log(resultObj.data[0]);
+                    output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
+                    res.status(200).json(output);
+                    return [3 /*break*/, 3];
+                case 2:
+                    e_8 = _a.sent();
+                    res.status(500).end();
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
 });
-app.use('/user/:id', function (req, res, next) {
-    console.log('Request URL:', req.originalUrl);
-    next();
-}, function (req, res, next) {
-    console.log('Request Type:', req.method);
-    next();
-});
-app.use(function (err, req, res, next) {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
-});
+var api = require('./api');
 app.use('/api', api.router);
 app.use(express.static(__dirname + '/public'));
 server.listen(PORT, function () {
