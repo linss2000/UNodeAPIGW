@@ -9,6 +9,8 @@ const stream = require('stream');
 const _ = require('lodash');
 const fs = require('fs');
 const fetch = require('node-fetch');
+const nodemailer = require('nodemailer');
+import * as os from "os";
 //const axios = require('axios');
 
 const ExtractJwt = passportJWT.ExtractJwt;
@@ -21,7 +23,7 @@ jwtOptions.secretOrKey = 'tasmanianDevil';
 
 var strategy = new JwtStrategy(jwtOptions, async (jwt_payload, next) => {
     console.log('payload received', jwt_payload);
-    const tmpData, resultObj;
+    const tmpData,resultObj;
     //Log the token in database
     try {
         var parm = [];        
@@ -57,6 +59,7 @@ const bodyParser = require('body-parser');
 const app = express();
 const server = http.Server(app);
 const io = require("socket.io")(server);
+
 
 app.use('*', function (req, res, next) {
     console.log("Headers")
@@ -178,11 +181,125 @@ app.post("/toLoadSvc", passport.authenticate('jwt', { session: false }), functio
 });
 
 
+app.post("/sendEmail", async function (req, res) {
+    var result;
+    try {
+        console.log(req.body.hv_email)
+        const parm = [];
+        parm[0] =  req.body.hv_email;
+        const tmpData = await DBase.DB.execSP("sps_checkemail", parm);
+
+        //console.log(tmpData)
+        const resultObj = JSON.parse(tmpData);
+        console.log(resultObj.data[0]);
+        if (resultObj.data[0].length > 0) {
+        
+           
+        /*
+        var transporter = nodemailer.createTransport({
+            host: 'server54.web-hosting.com',
+            port: 465,
+            secure: true,
+            auth: {
+            user: 'venugopal.kolli@hudsonvalleysystems.com',
+            pass: 'Mini8536!'
+            }
+        });
+  
+        var mailOptions = {
+            from: 'venugopal.kolli@hudsonvalleysystems.com',
+            to: 'kollive@gmail.com',
+            subject: 'Sending Email using Node.js',
+            text: 'That was easy!'
+        };
+        */
+        var transporter = nodemailer.createTransport({
+            service: 'gmail',
+            port: 465,
+            secure: true,
+            auth: {
+            user: 'kollive@gmail.com',
+            pass: 'nandu10016'
+            }
+        });
+  
+        var htm = "<div>Hi " + resultObj.data[0][0].hv_first_name + ",<br/><br/> We have received a request to reset your password. <br/> If you did not make this request, just ignore this message.";
+        htm += "Otherwise, you can reset your password using this link<br/><br/>"
+        htm += "<a href='http://localhost:3000/changepwd'> Click here to reset your password</a><br/>"
+        htm += "<br/>Thanks,<br/> The HVS Cadet Team"
+
+        var mailOptions = {
+            from: 'kollive@gmail.com',
+            to: 'kollive@hotmail.com;' + req.body.hv_email,
+            subject: 'Reset your Password',
+            html: htm,          
+        };
+
+        transporter.sendMail(mailOptions, function(error, info){
+            if (error) {
+            console.log(error);
+            } else {
+            console.log('Email sent: ' + info.response);
+            }
+        });
+
+        var output = JSON.stringify({ "message": "ok", "token": null, "result": {val: 1, msg: "email sent to reset your password."} });
+        res.status(200).json(output);
+    }else {
+        var output = JSON.stringify({ "message": "ok", "token": null, "result": {val: -1, msg: "Please Enter a Valid email that was registered."}  });
+        res.status(200).json(output);
+    }
+        //console.log(resultObj.data[0][0].validToken);
+        //console.log(tmpData)
+        //console.log(tmpData.data[0].hv_auth_code)
+    } catch (e) {
+        res.status(500).end();
+    }
+   
+    //res.send(result);
+});
+
+app.post("/changePWD", async function (req, res) {
+    var result;
+    try {
+        console.log(req.body.userID)
+        console.log(req.body.currPWD)
+        console.log(req.body.newPWD)
+        const parm = [];
+        parm[0] =  req.body.userID;
+        parm[1] =  req.body.currPWD;
+        parm[2] =  req.body.newPWD;
+
+        const tmpData = await DBase.DB.execSP("spu_updatePWD", parm);
+
+        //console.log(tmpData)
+        const resultObj = JSON.parse(tmpData);
+        console.log(resultObj.data[0]);
+        if (resultObj.data[0].length > 0) {
+                   
+        var output = JSON.stringify({ "message": "ok", "token": null, "result": {val: resultObj.data[0][0].hv_return, msg: resultObj.data[0][0].hv_msg} });
+        res.status(200).json(output);
+    }else {
+        var output = JSON.stringify({ "message": "ok", "token": null, "result": {val: -1, msg: "Please contact HelpDesk."}  });
+        res.status(200).json(output);
+    }
+        //console.log(resultObj.data[0][0].validToken);
+        //console.log(tmpData)
+        //console.log(tmpData.data[0].hv_auth_code)
+    } catch (e) {
+        res.status(500).end();
+    }
+   
+    //res.send(result);
+});
+
+
 app.post("/loginsvc", async function (req, res) {
     var result;
 
     try {
-        var url = await getURLs('logon');
+        //var url = await getURLs('logon');
+        var url = "http://localhost:3001/loginsvc";        
         console.log(url);
 
         var name;
@@ -219,7 +336,7 @@ app.post("/loginsvc", async function (req, res) {
     console.log(result)
     console.log(JSON.parse(result).message)
 
-    if (JSON.parse(result).message == "ok") {
+    if (JSON.parse(result).message == 1) {
 
         const uuidv4 = require('uuid/v4');
         const authId = uuidv4(); // ⇨ 'df7cca36-3d7a-40f4-8f06-ae03cc22f045'
@@ -248,7 +365,7 @@ app.post("/loginsvc", async function (req, res) {
         res.status(200).json(output);
 
     } else {
-        var output = JSON.stringify({ "message": "User Id/ password doesn't exists", "result": "-1" });
+        var output = JSON.stringify({ "message":  JSON.parse(result).result, "result": "-1" });
         res.status(200).json(output);
     }
     //res.send(result);
