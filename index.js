@@ -298,8 +298,8 @@ app.post("/loginsvc", async function (req, res) {
     var result;
 
     try {
-        //var url = await getURLs('logon');
-        var url = "http://localhost:3001/loginsvc";        
+        var url = await getURLs('logon');
+        //var url = "http://localhost:3001/loginsvc";        
         console.log(url);
 
         var name;
