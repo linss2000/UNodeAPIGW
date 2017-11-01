@@ -35,6 +35,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
+exports.__esModule = true;
 var jwt = require('jsonwebtoken-refresh');
 var passport = require('passport');
 var passportJWT = require('passport-jwt');
@@ -184,6 +185,96 @@ app.io = io.sockets.on('connection', function (socket) {
         //app.io.emit('chat-message', msg);
     });
 });
+app.get('/excel', function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var nodeExcel, dateFormat, conf, arr, parm, tmpData, resultObj, i, a, result;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    nodeExcel = require('excel-export');
+                    dateFormat = require('dateformat');
+                    conf = {};
+                    arr = [];
+                    conf.cols = [{
+                            caption: 'ID.',
+                            type: 'number',
+                            width: 3
+                        },
+                        {
+                            caption: 'User ID',
+                            type: 'string',
+                            width: 50
+                        },
+                        {
+                            caption: 'Location',
+                            type: 'string',
+                            width: 75
+                        },
+                        {
+                            caption: 'SQL',
+                            type: 'string',
+                            width: 150
+                        },
+                        {
+                            caption: 'Start TM',
+                            type: 'string',
+                            width: 75
+                        },
+                        {
+                            caption: 'End TM',
+                            type: 'string',
+                            width: 75
+                        },
+                        {
+                            caption: 'Error',
+                            type: 'string',
+                            width: 150
+                        },
+                        {
+                            caption: 'Error Desc',
+                            type: 'string',
+                            width: 150
+                        }
+                    ];
+                    parm = [];
+                    console.log("Before SQL");
+                    console.log(Date.now());
+                    return [4 /*yield*/, DBase.DB.execSQl("select top 100 gs_id,gs_user_i,gs_oru_i,gs_Sql,gs_strt_tm,gs_end_tm,gs_err,gs_err_desc from tdblog")];
+                case 1:
+                    tmpData = _a.sent();
+                    console.log(tmpData);
+                    resultObj = JSON.parse(tmpData);
+                    //console.log(resultObj.data[0]);
+                    console.log(Date.now());
+                    if (resultObj.data[0].length > 0) {
+                        arr = [];
+                        for (i = 0; i < resultObj.data[0].length; i++) {
+                            a = [
+                                resultObj.data[0][i].gs_id,
+                                resultObj.data[0][i].gs_user_i,
+                                resultObj.data[0][i].gs_oru_i,
+                                resultObj.data[0][i].gs_Sql,
+                                (dateFormat(resultObj.data[0][i].gs_strt_tm, "mm/dd/yyyy HH:MM:ss")),
+                                (dateFormat(resultObj.data[0][i].gs_end_tm, "mm/dd/yyyy HH:MM:ss")),
+                                resultObj.data[0][i].gs_err,
+                                resultObj.data[0][i].gs_err_desc,
+                            ];
+                            arr.push(a);
+                        }
+                        conf.rows = arr;
+                        result = nodeExcel.execute(conf);
+                        console.log(Date.now());
+                        res.setHeader('Content-Type', 'application/vnd.openxmlformats');
+                        res.setHeader("Content-Disposition", "attachment;filename=" + "todo.xlsx");
+                        console.log(Date.now());
+                        res.end(result, 'binary');
+                        //res.status(200).send(new Buffer(result.toString(),'binary').toString("base64"));
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+});
 app.post("/toLoadSvc", passport.authenticate('jwt', { session: false }), function (req, res) {
     try {
         console.log(req.get('Authorization'));
@@ -308,8 +399,11 @@ app.post("/loginsvc", function (req, res) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    _a.trys.push([0, 3, , 4]);
-                    url = "http://localhost:3001/loginsvc";
+                    _a.trys.push([0, 4, , 5]);
+                    return [4 /*yield*/, getURLs('logon')];
+                case 1:
+                    url = _a.sent();
+                    //var url = "http://localhost:3001/loginsvc";        
                     console.log(url);
                     if (req.body.usr && req.body.pwd) {
                         name = req.body.usr;
@@ -326,49 +420,49 @@ app.post("/loginsvc", function (req, res) {
                             body: parms,
                             headers: { 'Content-Type': 'application/json' }
                         })];
-                case 1:
+                case 2:
                     data = _a.sent();
                     return [4 /*yield*/, data.json()];
-                case 2:
-                    result = _a.sent();
-                    return [3 /*break*/, 4];
                 case 3:
+                    result = _a.sent();
+                    return [3 /*break*/, 5];
+                case 4:
                     e_4 = _a.sent();
                     res.status(500).end();
-                    return [3 /*break*/, 4];
-                case 4:
+                    return [3 /*break*/, 5];
+                case 5:
                     console.log(result);
                     console.log(JSON.parse(result).message);
-                    if (!(JSON.parse(result).message == 1)) return [3 /*break*/, 9];
+                    if (!(JSON.parse(result).message == 1)) return [3 /*break*/, 10];
                     uuidv4 = require('uuid/v4');
                     authId = uuidv4();
                     payload = { userId: name, role: "read", authID: authId };
                     token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '1h' });
                     console.log(token);
-                    _a.label = 5;
-                case 5:
-                    _a.trys.push([5, 7, , 8]);
+                    _a.label = 6;
+                case 6:
+                    _a.trys.push([6, 8, , 9]);
                     parm = [];
                     parm[0] = token;
                     parm[1] = name;
                     parm[2] = authId;
                     return [4 /*yield*/, DBase.DB.execSP("spi_taccesstoken", parm)];
-                case 6:
-                    tmpData = _a.sent();
-                    return [3 /*break*/, 8];
                 case 7:
+                    tmpData = _a.sent();
+                    return [3 /*break*/, 9];
+                case 8:
                     e_5 = _a.sent();
                     console.log(e_5);
-                    return [3 /*break*/, 8];
-                case 8:
+                    return [3 /*break*/, 9];
+                case 9:
                     output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result });
                     res.status(200).json(output);
-                    return [3 /*break*/, 10];
-                case 9:
+                    return [3 /*break*/, 11];
+                case 10:
                     output = JSON.stringify({ "message": JSON.parse(result).result, "result": "-1" });
                     res.status(200).json(output);
-                    _a.label = 10;
-                case 10:
+                    _a.label = 11;
+                case 11:
                     //res.send(result);
                     console.log(result);
                     return [2 /*return*/];

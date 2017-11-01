@@ -157,6 +157,93 @@ app.io = io.sockets.on('connection', function (socket) {
 })
 
 
+
+app.get('/excel',async function (req, res) {
+    const nodeExcel=require('excel-export');
+    const dateFormat = require('dateformat');
+    var conf={}
+    var arr=[];
+
+    conf.cols=[{
+            caption:'ID.',
+            type:'number',
+            width:3
+        },
+        {
+            caption:'User ID',
+            type:'string',
+            width:50
+        },
+        {
+            caption:'Location',
+            type:'string',
+            width:75
+        },
+        {
+            caption:'SQL',
+            type:'string',
+            width:150
+        },
+        {
+            caption:'Start TM',
+            type:'string',
+            width:75
+        },
+        {
+            caption:'End TM',
+            type:'string',
+            width:75
+        },
+        {
+            caption:'Error',
+            type:'string',
+            width:150
+        },
+        {
+            caption:'Error Desc',
+            type:'string',
+            width:150
+        }
+        ];
+  
+        const parm = [];
+       console.log("Before SQL")
+       console.log(Date.now())
+        const tmpData = await DBase.DB.execSQl("select top 100 gs_id,gs_user_i,gs_oru_i,gs_Sql,gs_strt_tm,gs_end_tm,gs_err,gs_err_desc from tdblog");
+
+        console.log(tmpData)
+        const resultObj = JSON.parse(tmpData);
+        //console.log(resultObj.data[0]);
+        console.log(Date.now())
+        if (resultObj.data[0].length > 0) {
+            
+            arr=[];
+            for(var i=0;i<resultObj.data[0].length;i++){                
+                var a=[
+                    resultObj.data[0][i].gs_id,
+                    resultObj.data[0][i].gs_user_i,
+                    resultObj.data[0][i].gs_oru_i,
+                    resultObj.data[0][i].gs_Sql,
+                    (dateFormat(resultObj.data[0][i].gs_strt_tm, "mm/dd/yyyy HH:MM:ss")),
+                    (dateFormat(resultObj.data[0][i].gs_end_tm, "mm/dd/yyyy HH:MM:ss")),
+                    resultObj.data[0][i].gs_err,
+                    resultObj.data[0][i].gs_err_desc,
+                ];
+                arr.push(a);
+                }
+                conf.rows=arr;
+               
+                //conf.rows= resultObj.data[0];
+    var result=nodeExcel.execute(conf);
+    console.log(Date.now())
+    res.setHeader('Content-Type','application/vnd.openxmlformats');
+    res.setHeader("Content-Disposition","attachment;filename="+"todo.xlsx");
+    console.log(Date.now())
+    res.end(result, 'binary');
+    //res.status(200).send(new Buffer(result.toString(),'binary').toString("base64"));
+    }
+});
+   
 app.post("/toLoadSvc", passport.authenticate('jwt', { session: false }), function (req, res) {
     try {
         console.log(req.get('Authorization'))
@@ -225,7 +312,7 @@ app.post("/sendEmail", async function (req, res) {
   
         var htm = "<div>Hi " + resultObj.data[0][0].hv_first_name + ",<br/><br/> We have received a request to reset your password. <br/> If you did not make this request, just ignore this message.";
         htm += "Otherwise, you can reset your password using this link<br/><br/>"
-        htm += "<a href='http://localhost:3000/changepwd'> Click here to reset your password</a><br/>"
+        htm += "<a href='http://hvs.selfip.net:3000/changepwd'> Click here to reset your password</a><br/>"
         htm += "<br/>Thanks,<br/> The HVS Cadet Team"
 
         var mailOptions = {
