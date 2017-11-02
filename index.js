@@ -305,18 +305,21 @@ app.post("/sendEmail", async function (req, res) {
             port: 465,
             secure: true,
             auth: {
-            user: 'kollive@gmail.com',
-            pass: 'nandu10016'
+            user: 'hvscadet@gmail.com',
+            pass: 'HudsonCadet!'
             }
         });
   
+        //console.log( resultObj.data[0][0].hv_pwd_token )
         var htm = "<div>Hi " + resultObj.data[0][0].hv_first_name + ",<br/><br/> We have received a request to reset your password. <br/> If you did not make this request, just ignore this message.";
         htm += "Otherwise, you can reset your password using this link<br/><br/>"
-        htm += "<a href='http://hvs.selfip.net:3000/changepwd'> Click here to reset your password</a><br/>"
+        //htm += "<a href=\'http://localhost:3000/changepwd/" + resultObj.data[0][0].hv_pwd_token + "\'> Click here to reset your password</a><br/>"
+        htm += "<a href=\'http://hvs.selfip.net:3000/changepwd/" + resultObj.data[0][0].hv_pwd_token + "\'> Click here to reset your password</a><br/>"
         htm += "<br/>Thanks,<br/> The HVS Cadet Team"
 
+        console.log(htm)
         var mailOptions = {
-            from: 'kollive@gmail.com',
+            from: 'HVSCadet@gmail.com',
             to: 'kollive@hotmail.com;' + req.body.hv_email,
             subject: 'Reset your Password',
             html: htm,          
@@ -368,6 +371,39 @@ app.post("/changePWD", async function (req, res) {
         res.status(200).json(output);
     }else {
         var output = JSON.stringify({ "message": "ok", "token": null, "result": {val: -1, msg: "Please contact HelpDesk."}  });
+        res.status(200).json(output);
+    }
+        //console.log(resultObj.data[0][0].validToken);
+        //console.log(tmpData)
+        //console.log(tmpData.data[0].hv_auth_code)
+    } catch (e) {
+        res.status(500).end();
+    }
+   
+    //res.send(result);
+});
+
+app.post("/checkToken", async function (req, res) {
+    var result;
+    try {
+        console.log(req.body.userID)
+        console.log(req.body.currPWD)
+        console.log(req.body.newPWD)
+        const parm = [];
+        parm[0] =  req.body.secToken;
+       
+
+        const tmpData = await DBase.DB.execSP("sps_checkPWDToken", parm);
+
+        //console.log(tmpData)
+        const resultObj = JSON.parse(tmpData);
+        console.log(resultObj.data[0]);
+        if (resultObj.data[0].length > 0) {
+                   
+        var output = JSON.stringify({ "message": "ok", "token": null, "result": {hv_user_id: resultObj.data[0][0].hv_user_id, msg: "", val: 1} });
+        res.status(200).json(output);
+    }else {
+        var output = JSON.stringify({ "message": "ok", "token": null, "result": {val: -1, msg: "Reset Link is not valid. Please contact HelDesk."}  });
         res.status(200).json(output);
     }
         //console.log(resultObj.data[0][0].validToken);

@@ -317,16 +317,17 @@ app.post("/sendEmail", function (req, res) {
                             port: 465,
                             secure: true,
                             auth: {
-                                user: 'kollive@gmail.com',
-                                pass: 'nandu10016'
+                                user: 'hvscadet@gmail.com',
+                                pass: 'HudsonCadet!'
                             }
                         });
                         htm = "<div>Hi " + resultObj.data[0][0].hv_first_name + ",<br/><br/> We have received a request to reset your password. <br/> If you did not make this request, just ignore this message.";
                         htm += "Otherwise, you can reset your password using this link<br/><br/>";
-                        htm += "<a href='http://localhost:3000/changepwd'> Click here to reset your password</a><br/>";
+                        htm += "<a href=\'http://localhost:3000/changepwd/" + resultObj.data[0][0].hv_pwd_token + "\'> Click here to reset your password</a><br/>";
                         htm += "<br/>Thanks,<br/> The HVS Cadet Team";
+                        console.log(htm);
                         mailOptions = {
-                            from: 'kollive@gmail.com',
+                            from: 'HVSCadet@gmail.com',
                             to: 'kollive@hotmail.com;' + req.body.hv_email,
                             subject: 'Reset your Password',
                             html: htm
@@ -393,9 +394,44 @@ app.post("/changePWD", function (req, res) {
         });
     });
 });
+app.post("/checkToken", function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, parm, tmpData, resultObj, output, output, e_4;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    console.log(req.body.userID);
+                    console.log(req.body.currPWD);
+                    console.log(req.body.newPWD);
+                    parm = [];
+                    parm[0] = req.body.secToken;
+                    return [4 /*yield*/, DBase.DB.execSP("sps_checkPWDToken", parm)];
+                case 1:
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    console.log(resultObj.data[0]);
+                    if (resultObj.data[0].length > 0) {
+                        output = JSON.stringify({ "message": "ok", "token": null, "result": { hv_user_id: resultObj.data[0][0].hv_user_id, msg: "", val: 1 } });
+                        res.status(200).json(output);
+                    }
+                    else {
+                        output = JSON.stringify({ "message": "ok", "token": null, "result": { val: -1, msg: "Reset Link is not valid. Please contact HelDesk." } });
+                        res.status(200).json(output);
+                    }
+                    return [3 /*break*/, 3];
+                case 2:
+                    e_4 = _a.sent();
+                    res.status(500).end();
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+});
 app.post("/loginsvc", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, url, name, password, parms, data, e_4, uuidv4, authId, payload, token, parm, tmpData, e_5, output, output;
+        var result, url, name, password, parms, data, e_5, uuidv4, authId, payload, token, parm, tmpData, e_6, output, output;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -427,7 +463,7 @@ app.post("/loginsvc", function (req, res) {
                     result = _a.sent();
                     return [3 /*break*/, 5];
                 case 4:
-                    e_4 = _a.sent();
+                    e_5 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 5];
                 case 5:
@@ -451,8 +487,8 @@ app.post("/loginsvc", function (req, res) {
                     tmpData = _a.sent();
                     return [3 /*break*/, 9];
                 case 8:
-                    e_5 = _a.sent();
-                    console.log(e_5);
+                    e_6 = _a.sent();
+                    console.log(e_6);
                     return [3 /*break*/, 9];
                 case 9:
                     output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result });
@@ -472,39 +508,13 @@ app.post("/loginsvc", function (req, res) {
 });
 app.post("/db", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_6;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 2, , 3]);
-                    parm = [];
-                    return [4 /*yield*/, DBase.DB.execSP("sps_getAttribTables", parm)];
-                case 1:
-                    tmpData = _a.sent();
-                    resultObj = JSON.parse(tmpData);
-                    console.log(resultObj.data[0]);
-                    output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
-                    res.status(200).json(output);
-                    return [3 /*break*/, 3];
-                case 2:
-                    e_6 = _a.sent();
-                    res.status(500).end();
-                    return [3 /*break*/, 3];
-                case 3: return [2 /*return*/];
-            }
-        });
-    });
-});
-app.post("/GetAttribTable", function (req, res) {
-    return __awaiter(this, void 0, void 0, function () {
         var result, parm, tmpData, resultObj, output, e_7;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
                     parm = [];
-                    parm[0] = req.body.hv_table_i;
-                    return [4 /*yield*/, DBase.DB.execSP("sps_getAttribTableValues", parm)];
+                    return [4 /*yield*/, DBase.DB.execSP("sps_getAttribTables", parm)];
                 case 1:
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
@@ -521,7 +531,7 @@ app.post("/GetAttribTable", function (req, res) {
         });
     });
 });
-app.post("/delAttribTable", function (req, res) {
+app.post("/GetAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var result, parm, tmpData, resultObj, output, e_8;
         return __generator(this, function (_a) {
@@ -530,8 +540,7 @@ app.post("/delAttribTable", function (req, res) {
                     _a.trys.push([0, 2, , 3]);
                     parm = [];
                     parm[0] = req.body.hv_table_i;
-                    parm[1] = req.body.hv_universal_i;
-                    return [4 /*yield*/, DBase.DB.execSP("spd_AttribTableValues", parm)];
+                    return [4 /*yield*/, DBase.DB.execSP("sps_getAttribTableValues", parm)];
                 case 1:
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
@@ -548,9 +557,36 @@ app.post("/delAttribTable", function (req, res) {
         });
     });
 });
-app.post("/updAttribTable", function (req, res) {
+app.post("/delAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var result, parm, tmpData, resultObj, output, e_9;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    parm = [];
+                    parm[0] = req.body.hv_table_i;
+                    parm[1] = req.body.hv_universal_i;
+                    return [4 /*yield*/, DBase.DB.execSP("spd_AttribTableValues", parm)];
+                case 1:
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    console.log(resultObj.data[0]);
+                    output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
+                    res.status(200).json(output);
+                    return [3 /*break*/, 3];
+                case 2:
+                    e_9 = _a.sent();
+                    res.status(500).end();
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+});
+app.post("/updAttribTable", function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, parm, tmpData, resultObj, output, e_10;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -568,7 +604,7 @@ app.post("/updAttribTable", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_9 = _a.sent();
+                    e_10 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -578,7 +614,7 @@ app.post("/updAttribTable", function (req, res) {
 });
 app.post("/insAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_10;
+        var result, parm, tmpData, resultObj, output, e_11;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -595,7 +631,7 @@ app.post("/insAttribTable", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_10 = _a.sent();
+                    e_11 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
