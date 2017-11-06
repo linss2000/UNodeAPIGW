@@ -359,6 +359,7 @@ app.post("/changePWD", async function (req, res) {
         parm[0] =  req.body.userID;
         parm[1] =  req.body.currPWD;
         parm[2] =  req.body.newPWD;
+        parm[3] = req.body.emailReset
 
         const tmpData = await DBase.DB.execSP("spu_updatePWD", parm);
 
