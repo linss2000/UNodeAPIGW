@@ -488,7 +488,7 @@ app.post("/loginsvc", async function (req, res) {
         res.status(200).json(output);
 
     } else {
-        var output = JSON.stringify({ "message":  JSON.parse(result).result, "result": "-1" });
+        var output = JSON.stringify({ "message":  JSON.parse(result).result, "result": JSON.parse(result).message });
         res.status(200).json(output);
     }
     //res.send(result);
