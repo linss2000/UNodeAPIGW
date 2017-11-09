@@ -542,13 +542,14 @@ app.post("/db", async function (req, res) {
 
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);
-        console.log(resultObj.data[0]);
+        //console.log(resultObj.data[0]);
         var output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
         res.status(200).json(output);
         //console.log(resultObj.data[0][0].validToken);
         //console.log(tmpData)
         //console.log(tmpData.data[0].hv_auth_code)
     } catch (e) {
+        console.log(e)
         res.status(500).end();
     }
    
