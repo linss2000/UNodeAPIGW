@@ -180,7 +180,7 @@ export class Dbase extends EventEmitter {
             let tmpData = await req.execute("spi_tdblog_1")
             await transaction.commit()                
             //console.log(data)
-            mssql.close()
+            //mssql.close()
             
             return JSON.stringify(retObject);
                         
@@ -220,9 +220,11 @@ export class Dbase extends EventEmitter {
             errObject.returnValue = "0";
             errObject.output = {};
 
-            mssql.close()
+            //mssql.close()
             return JSON.stringify(errObject);
-        };
+        }finally {
+            pool.close(); //closing connection after request is finished.
+          };
         /*
         try {
             let result = await pool
@@ -397,7 +399,7 @@ export class Dbase extends EventEmitter {
             res.input("gs_transaction_id", "0");
 
             let tmpData = await res.execute("spi_tdblog_1")
-            mssql.close()
+            //mssql.close()
             //console.log(data) let data = await request.query(SQL)
             return JSON.stringify(retObject);
         } catch (err) {
@@ -433,9 +435,11 @@ export class Dbase extends EventEmitter {
             errObject.output = {};
 
             //throw new Error("Error Occured");
-            mssql.close()
+            //mssql.close()
             return JSON.stringify(errObject);
-        };
+        }finally {
+            pool.close(); //closing connection after request is finished.
+          };
     }
 
 
