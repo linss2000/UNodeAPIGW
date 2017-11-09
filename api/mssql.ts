@@ -16,10 +16,12 @@ myEmitter.on('event', () => {
 */
 
 let env = process.env.NODE_ENV || "Dev";
+//let pool =  new mssql.connect(config.get(env + ".dbConfig"));
 
 console.log("NODE_CONFIG_DIR: " + config.util.getEnv("NODE_CONFIG_DIR"));
 
 mssql.on("error", err => {
+    console.log(err)
   // ... error handler
 });
 //import * as async from "async";
@@ -89,7 +91,13 @@ export class Dbase extends EventEmitter {
 
     // this.emit('error', new Error('whoops!')); var dbConn = new
     // mssql.Connection(config.get(env + ".dbConfig"));
-    let pool = await mssql.connect(config.get(env + ".dbConfig"));
+    try{
+        //mssql.close()
+    } catch{
+
+    }
+    let pool = await new mssql.connect(config.get(env + ".dbConfig"));
+
     //5. await dbConn.connect();
     let rolledBack = false;
     let result;
@@ -113,7 +121,6 @@ export class Dbase extends EventEmitter {
       let hasOutput: boolean = false;
       let output_parm: any = "";
 
-      req = await transaction.request();
       //req.multiple = true;
 
       //if (result[0].length > 0) {
@@ -145,7 +152,8 @@ export class Dbase extends EventEmitter {
       }
 
       console.log(sqlProc + " " + parm);
-      let data = await req.execute(sqlProc);
+      req = await  transaction.request();
+      let data = await req.execute(sqlProc);     
       gs_end_tm = _getTimeStamp(); //func.getTimeStamp();
       //console.log(data)
 
@@ -166,10 +174,10 @@ export class Dbase extends EventEmitter {
       } else {
         retObject.output = {};
       }
-      //pool.close()
+     
 
       //Log the database call
-      req = await transaction.request();
+      req = await  transaction.request();
 
       req.input("gs_user_i", username.sync());
       req.input("gs_oru_i", "NA");
@@ -196,13 +204,13 @@ export class Dbase extends EventEmitter {
         console.log("%%%");
         //console.log(err)
       });
-
+    
       //console.log(err.message);
       errDesc = err.message;
       gs_Err = "-100";
       gs_end_tm = _getTimeStamp(); //func.getTimeStamp();
       //Log the database call
-      req = await pool.request();
+      req = await new pool.request();
 
       req.input("gs_user_i", username.sync());
       req.input("gs_oru_i", "NA");
@@ -229,8 +237,8 @@ export class Dbase extends EventEmitter {
       //mssql.close()
       return JSON.stringify(errObject);
     } finally {
-        mssql.close()
-      pool.close(); //closing connection after request is finished.
+      mssql.close()
+      //pool.close(); //closing connection after request is finished.
     }
     /*
         try {

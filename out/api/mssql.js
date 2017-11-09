@@ -59,8 +59,10 @@ myEmitter.on('event', () => {
 });
 */
 var env = process.env.NODE_ENV || "Dev";
-console.log('NODE_CONFIG_DIR: ' + config.util.getEnv('NODE_CONFIG_DIR'));
-mssql.on('error', function (err) {
+//let pool =  new mssql.connect(config.get(env + ".dbConfig"));
+console.log("NODE_CONFIG_DIR: " + config.util.getEnv("NODE_CONFIG_DIR"));
+mssql.on("error", function (err) {
+    console.log(err);
     // ... error handler
 });
 //import * as async from "async";
@@ -81,28 +83,34 @@ const config : {} = {
 */
 var _getTimeStamp = function () {
     var now = new Date();
-    return ((now.getMonth() + 1) + '/' + (now.getDate()) + '/' + now.getFullYear() + " " + now.getHours() + ':' + ((now.getMinutes() < 10)
-        ? ("0" + now.getMinutes())
-        : (now.getMinutes())) + ':' + ((now.getSeconds() < 10)
-        ? ("0" + now.getSeconds())
-        : (now.getSeconds())));
+    return (now.getMonth() +
+        1 +
+        "/" +
+        now.getDate() +
+        "/" +
+        now.getFullYear() +
+        " " +
+        now.getHours() +
+        ":" +
+        (now.getMinutes() < 10 ? "0" + now.getMinutes() : now.getMinutes()) +
+        ":" +
+        (now.getSeconds() < 10 ? "0" + now.getSeconds() : now.getSeconds()));
 };
 var Dbase = /** @class */ (function (_super) {
     __extends(Dbase, _super);
     function Dbase() {
         var _this = _super.call(this) || this;
-        console.log("Created");
-        ; // error here
+        console.log("Created"); // error here
         return _this;
     }
     /*
-    _getTimeStamp = () => {
-        var now = new Date();
-            return ((now.getMonth() + 1) + '/' + (now.getDate()) + '/' + now.getFullYear() + " " + now.getHours() + ':'
-                            + ((now.getMinutes() < 10) ? ("0" + now.getMinutes()) : (now.getMinutes())) + ':' + ((now.getSeconds() < 10) ? ("0" + now
-                            .getSeconds()) : (now.getSeconds())));
-    };
-    */
+      _getTimeStamp = () => {
+          var now = new Date();
+              return ((now.getMonth() + 1) + '/' + (now.getDate()) + '/' + now.getFullYear() + " " + now.getHours() + ':'
+                              + ((now.getMinutes() < 10) ? ("0" + now.getMinutes()) : (now.getMinutes())) + ':' + ((now.getSeconds() < 10) ? ("0" + now
+                              .getSeconds()) : (now.getSeconds())));
+      };
+      */
     Dbase.prototype.execSP = function (sqlProc, parms) {
         return __awaiter(this, void 0, void 0, function () {
             var headerSent, gs_start_tm, errDesc, gs_Err, parm, gs_end_tm, pool, rolledBack, result, transaction, req, hasOutput_1, output_parm_1, cnt_1, data, retObject, tmpData, err_1, tmpData, errObject;
@@ -115,38 +123,38 @@ var Dbase = /** @class */ (function (_super) {
                         gs_Err = "";
                         parm = "";
                         gs_end_tm = "";
-                        return [4 /*yield*/, mssql.connect(config.get(env + ".dbConfig"))];
+                        // this.emit('error', new Error('whoops!')); var dbConn = new
+                        // mssql.Connection(config.get(env + ".dbConfig"));
+                        try {
+                            mssql.close();
+                        }
+                        catch (_b) {
+                        }
+                        return [4 /*yield*/, new mssql.connect(config.get(env + ".dbConfig"))];
                     case 1:
                         pool = _a.sent();
                         rolledBack = false;
                         _a.label = 2;
                     case 2:
-                        _a.trys.push([2, 11, , 15]);
-                        return [4 /*yield*/, new mssql.Transaction(pool)
-                            //transaction.begin(err =>  {
-                        ];
+                        _a.trys.push([2, 11, 15, 16]);
+                        return [4 /*yield*/, new mssql.Transaction(pool)];
                     case 3:
                         transaction = _a.sent();
                         //transaction.begin(err =>  {
-                        return [4 /*yield*/, transaction.begin()
-                            //console.log("in transaction")
-                        ];
+                        return [4 /*yield*/, transaction.begin()];
                     case 4:
                         //transaction.begin(err =>  {
                         _a.sent();
                         return [4 /*yield*/, transaction
                                 .request()
                                 .input("gs_sp_name", sqlProc)
-                                .execute('sps_getSPParmNames')];
+                                .execute("sps_getSPParmNames")];
                     case 5:
                         //console.log("in transaction")
                         result = _a.sent();
                         console.log(result);
                         hasOutput_1 = false;
                         output_parm_1 = "";
-                        return [4 /*yield*/, transaction.request()];
-                    case 6:
-                        req = _a.sent();
                         //req.multiple = true;
                         //if (result[0].length > 0) {
                         if (result.recordsets.length > 0) {
@@ -176,11 +184,13 @@ var Dbase = /** @class */ (function (_super) {
                             }
                         }
                         console.log(sqlProc + " " + parm);
+                        return [4 /*yield*/, transaction.request()];
+                    case 6:
+                        req = _a.sent();
                         return [4 /*yield*/, req.execute(sqlProc)];
                     case 7:
                         data = _a.sent();
                         gs_end_tm = _getTimeStamp(); //func.getTimeStamp();
-                        console.log(data);
                         retObject = {};
                         retObject.errCode = "0";
                         retObject.errDesc = "";
@@ -195,8 +205,7 @@ var Dbase = /** @class */ (function (_super) {
                         }
                         return [4 /*yield*/, transaction.request()];
                     case 8:
-                        //pool.close()
-                        //Log the database call                
+                        //Log the database call
                         req = _a.sent();
                         req.input("gs_user_i", username.sync());
                         req.input("gs_oru_i", "NA");
@@ -213,31 +222,27 @@ var Dbase = /** @class */ (function (_super) {
                         return [4 /*yield*/, req.execute("spi_tdblog_1")];
                     case 9:
                         tmpData = _a.sent();
-                        return [4 /*yield*/, transaction.commit()
-                            //console.log(data)
-                        ];
+                        return [4 /*yield*/, transaction.commit()];
                     case 10:
                         _a.sent();
                         //console.log(data)
-                        mssql.close();
+                        //mssql.close()
                         return [2 /*return*/, JSON.stringify(retObject)];
                     case 11:
                         err_1 = _a.sent();
-                        //9. console.log(err);                        
+                        //9. console.log(err);
                         return [4 /*yield*/, transaction.rollback(function () {
                                 console.log("%%%");
-                                //console.log(err)                
-                            })
-                            //console.log(err.message);
-                        ];
+                                //console.log(err)
+                            })];
                     case 12:
-                        //9. console.log(err);                        
+                        //9. console.log(err);
                         _a.sent();
                         //console.log(err.message);
                         errDesc = err_1.message;
                         gs_Err = "-100";
                         gs_end_tm = _getTimeStamp(); //func.getTimeStamp();
-                        return [4 /*yield*/, pool.request()];
+                        return [4 /*yield*/, new pool.request()];
                     case 13:
                         //Log the database call
                         req = _a.sent();
@@ -262,11 +267,12 @@ var Dbase = /** @class */ (function (_super) {
                         errObject.data = [];
                         errObject.returnValue = "0";
                         errObject.output = {};
-                        mssql.close();
+                        //mssql.close()
                         return [2 /*return*/, JSON.stringify(errObject)];
                     case 15:
-                        ;
-                        return [2 /*return*/];
+                        mssql.close();
+                        return [7 /*endfinally*/];
+                    case 16: return [2 /*return*/];
                 }
             });
         });
@@ -293,14 +299,12 @@ var Dbase = /** @class */ (function (_super) {
                         pool = _a.sent();
                         _a.label = 2;
                     case 2:
-                        _a.trys.push([2, 10, , 14]);
+                        _a.trys.push([2, 10, 14, 15]);
                         return [4 /*yield*/, new mssql.Transaction(pool)];
                     case 3:
                         //var request = new mssql.Request(dbConn);
                         transaction = _a.sent();
-                        return [4 /*yield*/, transaction.begin()
-                            //console.log("in transaction")
-                        ];
+                        return [4 /*yield*/, transaction.begin()];
                     case 4:
                         _a.sent();
                         return [4 /*yield*/, pool.request(transaction)];
@@ -340,7 +344,7 @@ var Dbase = /** @class */ (function (_super) {
                         return [4 /*yield*/, res.execute("spi_tdblog_1")];
                     case 9:
                         tmpData = _a.sent();
-                        mssql.close();
+                        //mssql.close()
                         //console.log(data) let data = await request.query(SQL)
                         return [2 /*return*/, JSON.stringify(retObject)];
                     case 10:
@@ -378,25 +382,27 @@ var Dbase = /** @class */ (function (_super) {
                         errObject.returnValue = "0";
                         errObject.output = {};
                         //throw new Error("Error Occured");
-                        mssql.close();
+                        //mssql.close()
                         return [2 /*return*/, JSON.stringify(errObject)];
                     case 14:
-                        ;
-                        return [2 /*return*/];
+                        mssql.close();
+                        pool.close(); //closing connection after request is finished.
+                        return [7 /*endfinally*/];
+                    case 15: return [2 /*return*/];
                 }
             });
         });
     };
     Dbase.prototype.eSQL = function (req, res, next) {
         /*
-        let config = {
-            server: '10.2.1.35',
-            database: 'Galaxy_Development',
-            user: 'rread',
-            password: 'galaxy',
-            port: 1433
-        };
-        */
+            let config = {
+                server: '10.2.1.35',
+                database: 'Galaxy_Development',
+                user: 'rread',
+                password: 'galaxy',
+                port: 1433
+            };
+            */
         //4. console.log(req.body)
         var SQL = "select top 1 gs_document_name, gs_document from tleaveappdocs";
         console.log(SQL);
@@ -438,14 +444,14 @@ var Dbase = /** @class */ (function (_super) {
     };
     Dbase.prototype.executeSQl = function (req, res, next) {
         /*
-        let config = {
-            server: '10.2.1.35',
-            database: 'Galaxy_Development',
-            user: 'rread',
-            password: 'galaxy',
-            port: 1433
-        };
-        */
+            let config = {
+                server: '10.2.1.35',
+                database: 'Galaxy_Development',
+                user: 'rread',
+                password: 'galaxy',
+                port: 1433
+            };
+            */
         //4. console.log(req.body)
         var SQL = req.body.SQL;
         console.log(SQL);
@@ -460,40 +466,41 @@ var Dbase = /** @class */ (function (_super) {
             var data = [];
             var i = 1;
             /*
-            request.stream = true; // You can set streaming differently for each request
-            //request.query("select distinct gs_pr_name from ttodetail where gs_fy_yy= '2017' and isnull(gs_pr_name,'') <> ''"); // or request.execute(procedure);
-            request.query("select count(*) as 'count' from trptdata where gs_fy_yy = '2017' and " + SQL); // or request.execute(procedure);
-
-
-            request.on('recordset', function (columns) {
-                // Emitted once for each recordset in a query
-
-            });
-
-            request.on('row', function (row) {
-                // Emitted for each row in a recordset
-                res
-                    .status(200)
-                    .send(JSON.stringify(row));
-                    //dbConn.close();
-            });
-
-            request.on('error', function (err) {
-                console.log(err);
-                // May be emitted multiple times
-            });
-
-            request.on('done', function (affected) {
-                // Always emitted as the last one console.log(data);
-                // res.write(JSON.stringify(data));
-
-                dbConn.close();
-            });
-            //7.
-
-            */
+                    request.stream = true; // You can set streaming differently for each request
+                    //request.query("select distinct gs_pr_name from ttodetail where gs_fy_yy= '2017' and isnull(gs_pr_name,'') <> ''"); // or request.execute(procedure);
+                    request.query("select count(*) as 'count' from trptdata where gs_fy_yy = '2017' and " + SQL); // or request.execute(procedure);
+    
+    
+                    request.on('recordset', function (columns) {
+                        // Emitted once for each recordset in a query
+    
+                    });
+    
+                    request.on('row', function (row) {
+                        // Emitted for each row in a recordset
+                        res
+                            .status(200)
+                            .send(JSON.stringify(row));
+                            //dbConn.close();
+                    });
+    
+                    request.on('error', function (err) {
+                        console.log(err);
+                        // May be emitted multiple times
+                    });
+    
+                    request.on('done', function (affected) {
+                        // Always emitted as the last one console.log(data);
+                        // res.write(JSON.stringify(data));
+    
+                        dbConn.close();
+                    });
+                    //7.
+    
+                    */
             request
-                .query("select count(*) as 'count' from trptdata where gs_fy_yy = '2017' and " + SQL)
+                .query("select count(*) as 'count' from trptdata where gs_fy_yy = '2017' and " +
+                SQL)
                 .then(function (data) {
                 //res.send(200,JSON.stringify(recordSet));
                 console.log(data);
@@ -504,9 +511,7 @@ var Dbase = /** @class */ (function (_super) {
                 retObject.returnValue = data.returnValue;
                 retObject.output = {};
                 dbConn.close();
-                res
-                    .status(200)
-                    .send(JSON.stringify(retObject));
+                res.status(200).send(JSON.stringify(retObject));
             })["catch"](function (err) {
                 //8.
                 console.log(err);
@@ -519,14 +524,14 @@ var Dbase = /** @class */ (function (_super) {
     };
     Dbase.prototype.loadEmployees = function (req, res, next) {
         /*
-        let config = {
-            server: '10.2.1.35',
-            database: 'Galaxy_Development',
-            user: 'rread',
-            password: 'galaxy',
-            port: 1433
-        };
-        */
+            let config = {
+                server: '10.2.1.35',
+                database: 'Galaxy_Development',
+                user: 'rread',
+                password: 'galaxy',
+                port: 1433
+            };
+            */
         //4.
         var headerSent = false;
         var dbConn = new mssql.ConnectionPool(config.get(env + ".dbConfig"));
@@ -544,66 +549,66 @@ var Dbase = /** @class */ (function (_super) {
                 "eff_d,gs_bdgt_amt from ttodetail where gs_fy_yy= '2017' and isnull(gs_pr_name,''" +
                 ") <> '' "); // or request.execute(procedure);
             /*
-        // Simple writable stream that delays 1 sec before console.log and callback();
-        // Purpose: test whether the pipe pauses correctly while waiting for write to finish
-        var testStream = new stream.Writable({highWaterMark: 1, objectMode: true});
-        testStream._write = function(chunk,encoding,callback) {
-            setTimeout(function() {
-                //console.log(chunk);
-                if(data.length < 2) {
-                    data.push(JSON.stringify(chunk));
-                } else {
-                // res.write(JSON.stringify(data) + "(chunk " + i + ")\n");
-                    console.log(data);
-                    res.write(JSON.stringify(data));
-                    //res.flush();
-                    i = i + 1;
-                    data = [];
-                    data.push(JSON.stringify(chunk));
-                    //res.write(JSON.stringify(row) + "(row) " + "\n");
+                // Simple writable stream that delays 1 sec before console.log and callback();
+                // Purpose: test whether the pipe pauses correctly while waiting for write to finish
+                var testStream = new stream.Writable({highWaterMark: 1, objectMode: true});
+                testStream._write = function(chunk,encoding,callback) {
+                    setTimeout(function() {
+                        //console.log(chunk);
+                        if(data.length < 2) {
+                            data.push(JSON.stringify(chunk));
+                        } else {
+                        // res.write(JSON.stringify(data) + "(chunk " + i + ")\n");
+                            console.log(data);
+                            res.write(JSON.stringify(data));
+                            //res.flush();
+                            i = i + 1;
+                            data = [];
+                            data.push(JSON.stringify(chunk));
+                            //res.write(JSON.stringify(row) + "(row) " + "\n");
+                        }
+                        //res.write(JSON.stringify(chunk));
+                        callback();
+                    },0);
                 }
-                //res.write(JSON.stringify(chunk));
-                callback();
-            },0);
-        }
-
-        // Pipe the query stream into the testStream
-        request.pipe(testStream);
-
-        testStream.on('row', function(data) {
-            console.log(data);
-        });
-
-        testStream.on('error', function(err) {
-            // ...
-            console.log(err);
-        });
-        testStream.on('finish', function() {
-            // ...
-            console.log('finish');
-            res.write(JSON.stringify(data));
-            res.end();
-            dbConn.close();
-        });
-        */
+    
+                // Pipe the query stream into the testStream
+                request.pipe(testStream);
+    
+                testStream.on('row', function(data) {
+                    console.log(data);
+                });
+    
+                testStream.on('error', function(err) {
+                    // ...
+                    console.log(err);
+                });
+                testStream.on('finish', function() {
+                    // ...
+                    console.log('finish');
+                    res.write(JSON.stringify(data));
+                    res.end();
+                    dbConn.close();
+                });
+                */
             /*
-        strm._write = function (chunk, enc, next) {
-            console.dir(chunk);
-            next();
-        };
-
-        request.pipe(strm);
-        stream.on('error', function(err) {
-            // ...
-        });
-        stream.on('finish', function() {
-            // ...
-        });
-        */
-            request.on('recordset', function (columns) {
+                strm._write = function (chunk, enc, next) {
+                    console.dir(chunk);
+                    next();
+                };
+    
+                request.pipe(strm);
+                stream.on('error', function(err) {
+                    // ...
+                });
+                stream.on('finish', function() {
+                    // ...
+                });
+                */
+            request.on("recordset", function (columns) {
                 // Emitted once for each recordset in a query
             });
-            request.on('row', function (row) {
+            request.on("row", function (row) {
                 // Emitted for each row in a recordset
                 if (data.length < 1500) {
                     data.push(row);
@@ -615,46 +620,38 @@ var Dbase = /** @class */ (function (_super) {
                     data = [];
                     data.push(row);
                     //res.write(dataJson);
-                    req
-                        .app
-                        .io
-                        .emit('message', dataJson);
+                    req.app.io.emit("message", dataJson);
                     /*
-                setTimeout(function() {
-                    res.write(dataJson,"UTF8",next);
-                    //res.write(JSON.stringify(row) + "(row) " + "\n");
-                 },2000);
-                 */
+                            setTimeout(function() {
+                                res.write(dataJson,"UTF8",next);
+                                //res.write(JSON.stringify(row) + "(row) " + "\n");
+                             },2000);
+                             */
                 }
             });
-            request.on('error', function (err) {
+            request.on("error", function (err) {
                 console.log(err);
                 // May be emitted multiple times
             });
-            request.on('done', function (affected) {
+            request.on("done", function (affected) {
                 // Always emitted as the last one console.log(data);
                 // res.write(JSON.stringify(data));
-                req
-                    .app
-                    .io
-                    .emit('message', JSON.stringify(data));
-                res
-                    .status("200")
-                    .send("Done");
+                req.app.io.emit("message", JSON.stringify(data));
+                res.status("200").send("Done");
                 dbConn.close();
             });
             //7.
             /*
-        request.query("select * from ttodetail where gs_fy_yy= '2017'").then(function (recordSet) {
-            res.send(200,JSON.stringify(recordSet));
-            console.log(recordSet);
-            dbConn.close();
-        }).catch(function (err) {
-            //8.
-            console.log(err);
-            dbConn.close();
-        });
-        */
+                request.query("select * from ttodetail where gs_fy_yy= '2017'").then(function (recordSet) {
+                    res.send(200,JSON.stringify(recordSet));
+                    console.log(recordSet);
+                    dbConn.close();
+                }).catch(function (err) {
+                    //8.
+                    console.log(err);
+                    dbConn.close();
+                });
+                */
         })["catch"](function (err) {
             //9.
             console.log(err);
@@ -698,11 +695,11 @@ var Dbase = /** @class */ (function (_super) {
                 parm = parm.substr(0, parm.length - 1);
             }
             /*
-            for (var key in parms) {
-                console.log(parms[key])
-                request.input(key, parms[key]);
-            };
-            */
+                    for (var key in parms) {
+                        console.log(parms[key])
+                        request.input(key, parms[key]);
+                    };
+                    */
             request
                 .execute(spName)
                 .then(function (data) {
@@ -746,9 +743,7 @@ var Dbase = /** @class */ (function (_super) {
                     dbConn.close();
                 });
                 console.log(retObject);
-                res
-                    .status(200)
-                    .send(JSON.stringify(retObject));
+                res.status(200).send(JSON.stringify(retObject));
                 //dbConn.close();
             })["catch"](function (err) {
                 //5.
@@ -787,9 +782,7 @@ var Dbase = /** @class */ (function (_super) {
                 var errObject = {};
                 errObject.errCode = "-100";
                 errObject.errDesc = errDesc;
-                res
-                    .status(200)
-                    .send(JSON.stringify(errObject));
+                res.status(200).send(JSON.stringify(errObject));
                 //dbConn.close();
             });
         })["catch"](function (err) {
@@ -850,35 +843,41 @@ var Dbase = /** @class */ (function (_super) {
     Dbase.prototype.getUser = function (req, res, next) {
         var userid = req.params.userid;
         var pwd = req.params.pwd;
-        var con = mssql.createConnection({ host: "127.0.0.1", database: "mygalaxy", user: "root", password: "", multipleStatements: true });
+        var con = mssql.createConnection({
+            host: "127.0.0.1",
+            database: "mygalaxy",
+            user: "root",
+            password: "",
+            multipleStatements: true
+        });
         /*
-    var con = mssql.createConnection({
-      host: "hvs.selfip.com",
-      database: "HVS",
-      user: "root",
-      password: "galaxy",
-      multipleStatements: true
-      });
-*/
+        var con = mssql.createConnection({
+          host: "hvs.selfip.com",
+          database: "HVS",
+          user: "root",
+          password: "galaxy",
+          multipleStatements: true
+          });
+    */
         con.connect(function (err) {
             if (err) {
-                console.log('Error connecting to Db');
+                console.log("Error connecting to Db");
                 return;
             }
-            console.log('Connection established');
+            console.log("Connection established");
         });
-        con.query('SET @userid="' + userid + '"; set @pwd="' + pwd + '"; CALL sps_checkUser(@userid,@pwd)', function (err, rows, fields) {
+        con.query('SET @userid="' +
+            userid +
+            '"; set @pwd="' +
+            pwd +
+            '"; CALL sps_checkUser(@userid,@pwd)', function (err, rows, fields) {
             if (err) {
                 console.log(err);
-                res
-                    .status(500)
-                    .send("Error " + err);
+                res.status(500).send("Error " + err);
             }
             //if (err) throw err;
-            res
-                .status(200)
-                .send(JSON.stringify(rows[2]));
-            console.log('Data received from Db:\n');
+            res.status(200).send(JSON.stringify(rows[2]));
+            console.log("Data received from Db:\n");
             console.log(rows);
         });
         con.end(function (err) {
@@ -894,26 +893,40 @@ var Dbase = /** @class */ (function (_super) {
         var lname = req.params.lname;
         var age = req.params.age;
         var address = req.params.address;
-        var con = mssql.createConnection({ host: "127.0.0.1", database: "mygalaxy", user: "root", password: "welcome", multipleStatements: true });
+        var con = mssql.createConnection({
+            host: "127.0.0.1",
+            database: "mygalaxy",
+            user: "root",
+            password: "welcome",
+            multipleStatements: true
+        });
         con.connect(function (err) {
             if (err) {
-                console.log('Error connecting to Db');
+                console.log("Error connecting to Db");
                 return;
             }
-            console.log('Connection established');
+            console.log("Connection established");
         });
-        con.query('SET @lname="' + lname + '"; SET @fname="' + fname + '"; SET @age="' + age + '"; SET @address="' + address + '"; set @userid="' + userid + '"; set @pwd="' + pwd + '"; CALL spi_tuser(@lname,@fname,@age,@address,@userid,@pwd)', function (err, rows, fields) {
+        con.query('SET @lname="' +
+            lname +
+            '"; SET @fname="' +
+            fname +
+            '"; SET @age="' +
+            age +
+            '"; SET @address="' +
+            address +
+            '"; set @userid="' +
+            userid +
+            '"; set @pwd="' +
+            pwd +
+            '"; CALL spi_tuser(@lname,@fname,@age,@address,@userid,@pwd)', function (err, rows, fields) {
             if (err) {
                 console.log(err);
-                res
-                    .status(500)
-                    .send("Error " + err);
+                res.status(500).send("Error " + err);
             }
             //if (err) throw err;
-            res
-                .status(200)
-                .send(JSON.stringify(rows[6]));
-            console.log('Data received from Db:\n');
+            res.status(200).send(JSON.stringify(rows[6]));
+            console.log("Data received from Db:\n");
             console.log(rows);
         });
         con.end(function (err) {
@@ -929,65 +942,69 @@ var Dbase = /** @class */ (function (_super) {
     };
     Dbase.prototype.sendData = function (req, res, next) {
         // First you need to create a connection to the db
-        var con = mssql.createConnection({ host: "127.0.0.1", database: "mygalaxy", user: "root", password: "welcome", multipleStatements: true });
+        var con = mssql.createConnection({
+            host: "127.0.0.1",
+            database: "mygalaxy",
+            user: "root",
+            password: "welcome",
+            multipleStatements: true
+        });
         con.connect(function (err) {
             if (err) {
-                console.log('Error connecting to Db');
+                console.log("Error connecting to Db");
                 return;
             }
-            console.log('Connection established');
+            console.log("Connection established");
         });
         con.query('SET @id="RR"; CALL sps_getUsers(@id)', function (err, rows) {
             if (err)
                 throw err;
-            res
-                .status(200)
-                .send(JSON.stringify(rows[1]));
-            console.log('Data received from Db:\n');
+            res.status(200).send(JSON.stringify(rows[1]));
+            console.log("Data received from Db:\n");
             console.log(rows);
         });
         /*
-      con.query(
-        'UPDATE tuser SET gs_address = ? Where gs_Id = ?',
-        ["South Africa", 4],
-        function (err, result) {
-          if (err) throw err;
-
-          console.log('Changed ' + result.changedRows + ' rows');
-        }
-      );
-
-      con.query(
-        'DELETE FROM tuser WHERE gs_id = ?',
-        [5],
-        function (err, result) {
-          //if (err) throw err;
-          if(err){
-            res.status(500).send("Error " + err);
-          }
-          console.log('Deleted ' + result.affectedRows + ' rows');
-        }
-      );
-
-      let employee = { gs_last_name: 'Pagtalunan', gs_first_name: 'Rouel', gs_age:45, gs_address: '3 Everywhere'};
-      con.query('INSERT INTO tuser SET ?', employee, function(err,res){
-        if(err) throw err;
-        console.log('Last insert ID:', res.insertId);
-      });
-
-
-      con.query('SELECT * FROM tuser',function(err,rows){
-        //if(err) throw new err;
-        if(err){
-          res.status(500).send("Error " + err);
-        }
-        console.log('Data received from Db:\n');
-        res.status(200).send("Hello Data " + JSON.stringify(rows));
-        //res.json(JSON.stringify(rows));
-        //console.log(rows);
-        //res.status(200).send("Hello Data " + JSON.stringify(rows));
-      });
-      */
+          con.query(
+            'UPDATE tuser SET gs_address = ? Where gs_Id = ?',
+            ["South Africa", 4],
+            function (err, result) {
+              if (err) throw err;
+    
+              console.log('Changed ' + result.changedRows + ' rows');
+            }
+          );
+    
+          con.query(
+            'DELETE FROM tuser WHERE gs_id = ?',
+            [5],
+            function (err, result) {
+              //if (err) throw err;
+              if(err){
+                res.status(500).send("Error " + err);
+              }
+              console.log('Deleted ' + result.affectedRows + ' rows');
+            }
+          );
+    
+          let employee = { gs_last_name: 'Pagtalunan', gs_first_name: 'Rouel', gs_age:45, gs_address: '3 Everywhere'};
+          con.query('INSERT INTO tuser SET ?', employee, function(err,res){
+            if(err) throw err;
+            console.log('Last insert ID:', res.insertId);
+          });
+    
+    
+          con.query('SELECT * FROM tuser',function(err,rows){
+            //if(err) throw new err;
+            if(err){
+              res.status(500).send("Error " + err);
+            }
+            console.log('Data received from Db:\n');
+            res.status(200).send("Hello Data " + JSON.stringify(rows));
+            //res.json(JSON.stringify(rows));
+            //console.log(rows);
+            //res.status(200).send("Hello Data " + JSON.stringify(rows));
+          });
+          */
         con.end(function (err) {
             // The connection is terminated gracefully Ensures all previously enqueued
             // queries are still before sending a COM_QUIT packet to the MySQL server.
@@ -1001,9 +1018,9 @@ exports.Dbase = Dbase;
 exports.DB = new Dbase();
 exports.DBRouter = express_1.Router();
 //DBRouter.post('/nycaps', DB.loadNycaps);
-exports.DBRouter.post('/rules/executeSP', exports.DB.executeSP);
-exports.DBRouter.post('/rules', exports.DB.executeSQl);
-exports.DBRouter.post('/', exports.DB.loadEmployees);
+exports.DBRouter.post("/rules/executeSP", exports.DB.executeSP);
+exports.DBRouter.post("/rules", exports.DB.executeSQl);
+exports.DBRouter.post("/", exports.DB.loadEmployees);
 /*
 UsersRouter.post('/:userid/:pwd/:fname/:lname/:age/:address', DB.addUser);
 UsersRouter.post('/:userid/:pwd', DB.getUser);

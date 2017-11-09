@@ -10,11 +10,14 @@ const _ = require('lodash');
 const fs = require('fs');
 const fetch = require('node-fetch');
 const nodemailer = require('nodemailer');
+import * as config from "config";
+
 import * as os from "os";
 //const axios = require('axios');
 
 const ExtractJwt = passportJWT.ExtractJwt;
 const JwtStrategy = passportJWT.Strategy;
+var env = process.env.NODE_ENV || "Dev";
 
 var jwtOptions = {}
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader();
@@ -59,15 +62,17 @@ const bodyParser = require('body-parser');
 const app = express();
 const server = http.Server(app);
 const io = require("socket.io")(server);
+//var pool;
 
-
-app.use('*', function (req, res, next) {
+app.use('*', async function (req, res, next) {
     console.log("Headers")
     //console.log(req.header("Access-Control-Request-Headers"));
     //console.log(req)
     //console.log(TestAsync());
     //,,
     //res.header("Access-Control-Allow-Origin", "http://localhost:4200");
+    //pool = await new mssql.connect(config.get(env + ".dbConfig"));
+
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept,Authorization,Access-Control-Allow-Origin,Access-Control-Allow-Credentials");
@@ -361,7 +366,7 @@ app.post("/getCadets", async function (req, res) {
         const parm = [];
         parm[0] =  req.body.name;
        
-        const tmpData = await DBase.DB.execSP("sps_getcadets", parm);
+        const tmpData = await new DBase.DB.execSP("sps_getcadets", parm);
 
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);
@@ -538,7 +543,7 @@ app.post("/db", async function (req, res) {
     try {
       
         const parm = [];
-        const tmpData = await DBase.DB.execSP("sps_getAttribTables", parm);
+        const tmpData = await new DBase.DB.execSP("sps_getAttribTables", parm);
 
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);

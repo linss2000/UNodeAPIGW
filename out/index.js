@@ -49,6 +49,7 @@ var nodemailer = require('nodemailer');
 //const axios = require('axios');
 var ExtractJwt = passportJWT.ExtractJwt;
 var JwtStrategy = passportJWT.Strategy;
+var env = process.env.NODE_ENV || "Dev";
 var jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader();
 jwtOptions.secretOrKey = 'tasmanianDevil';
@@ -95,26 +96,33 @@ var bodyParser = require('body-parser');
 var app = express();
 var server = http.Server(app);
 var io = require("socket.io")(server);
+//var pool;
 app.use('*', function (req, res, next) {
-    console.log("Headers");
-    //console.log(req.header("Access-Control-Request-Headers"));
-    //console.log(req)
-    //console.log(TestAsync());
-    //,,
-    //res.header("Access-Control-Allow-Origin", "http://localhost:4200");
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept,Authorization,Access-Control-Allow-Origin,Access-Control-Allow-Credentials");
-    res.header("Access-Control-Allow-Credentials", true);
-    //res.header("Transfer-Encoding", "chunked");
-    //res.header("Content-Type", "text/plain");
-    //res.header("Content-Type", "application/json");
-    res.io = app.io;
-    //res.header("Accept", "q=0.8;application/json;q=0.9"); ,
-    //res.header("Connection", "keep-alive");
-    console.log('Time:', Date.now());
-    //console.log(await getURLs('db'));
-    next();
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            console.log("Headers");
+            //console.log(req.header("Access-Control-Request-Headers"));
+            //console.log(req)
+            //console.log(TestAsync());
+            //,,
+            //res.header("Access-Control-Allow-Origin", "http://localhost:4200");
+            //pool = await new mssql.connect(config.get(env + ".dbConfig"));
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
+            res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept,Authorization,Access-Control-Allow-Origin,Access-Control-Allow-Credentials");
+            res.header("Access-Control-Allow-Credentials", true);
+            //res.header("Transfer-Encoding", "chunked");
+            //res.header("Content-Type", "text/plain");
+            //res.header("Content-Type", "application/json");
+            res.io = app.io;
+            //res.header("Accept", "q=0.8;application/json;q=0.9"); ,
+            //res.header("Connection", "keep-alive");
+            console.log('Time:', Date.now());
+            //console.log(await getURLs('db'));
+            next();
+            return [2 /*return*/];
+        });
+    });
 });
 // Socket.io
 //const io = socket_io().listen(server);
@@ -377,11 +385,11 @@ app.post("/getCadets", function (req, res) {
                     _a.trys.push([0, 2, , 3]);
                     parm = [];
                     parm[0] = req.body.name;
-                    return [4 /*yield*/, DBase.DB.execSP("sps_getcadets", parm)];
+                    return [4 /*yield*/, new DBase.DB.execSP("sps_getcadets", parm)];
                 case 1:
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
-                    console.log(resultObj.data[0]);
+                    //console.log(resultObj.data[0]);
                     if (resultObj.data[0].length > 0) {
                         output = JSON.stringify({ "token": null, "result": { items: resultObj.data[0], msg: "" } });
                         res.status(200).json(output);
@@ -393,6 +401,7 @@ app.post("/getCadets", function (req, res) {
                     return [3 /*break*/, 3];
                 case 2:
                     e_3 = _a.sent();
+                    console.log(e_3);
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -558,16 +567,16 @@ app.post("/db", function (req, res) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
                     parm = [];
-                    return [4 /*yield*/, DBase.DB.execSP("sps_getAttribTables", parm)];
+                    return [4 /*yield*/, new DBase.DB.execSP("sps_getAttribTables", parm)];
                 case 1:
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
-                    console.log(resultObj.data[0]);
                     output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
                     e_8 = _a.sent();
+                    console.log(e_8);
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
