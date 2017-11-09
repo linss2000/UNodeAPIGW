@@ -140,7 +140,7 @@ export class Dbase extends EventEmitter {
             console.log(sqlProc + " " + parm);
             let data = await req.execute(sqlProc)
             gs_end_tm = _getTimeStamp(); //func.getTimeStamp();
-            console.log(data)
+            //console.log(data)
                             
             /*                            
             if(sqlProc == "spi_teobj") {                     

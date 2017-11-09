@@ -275,6 +275,16 @@ app.get('/excel', function (req, res) {
         });
     });
 });
+app.get('/cadetexcel', function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var file;
+        return __generator(this, function (_a) {
+            file = __dirname + '/public/CadetListDownloadExcel.xlsx';
+            res.download(file); // Set disposition and send it.
+            return [2 /*return*/];
+        });
+    });
+});
 app.post("/toLoadSvc", passport.authenticate('jwt', { session: false }), function (req, res) {
     try {
         console.log(req.get('Authorization'));

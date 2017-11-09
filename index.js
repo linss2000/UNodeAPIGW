@@ -243,6 +243,11 @@ app.get('/excel',async function (req, res) {
     //res.status(200).send(new Buffer(result.toString(),'binary').toString("base64"));
     }
 });
+
+app.get('/cadetexcel',async function (req, res) {    
+    var file = __dirname + '/public/CadetListDownloadExcel.xlsx';
+    res.download(file); // Set disposition and send it.
+});
    
 app.post("/toLoadSvc", passport.authenticate('jwt', { session: false }), function (req, res) {
     try {
@@ -360,7 +365,7 @@ app.post("/getCadets", async function (req, res) {
 
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);
-        console.log(resultObj.data[0]);
+        //console.log(resultObj.data[0]);
         if (resultObj.data[0].length > 0) {
                    
         var output = JSON.stringify({ "token": null, "result": {items: resultObj.data[0], msg: ""} });
@@ -373,6 +378,7 @@ app.post("/getCadets", async function (req, res) {
         //console.log(tmpData)
         //console.log(tmpData.data[0].hv_auth_code)
     } catch (e) {
+        console.log(e)
         res.status(500).end();
     }
    
