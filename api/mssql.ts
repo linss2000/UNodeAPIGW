@@ -210,7 +210,7 @@ export class Dbase extends EventEmitter {
       gs_Err = "-100";
       gs_end_tm = _getTimeStamp(); //func.getTimeStamp();
       //Log the database call
-      req = await new pool.request();
+      req = await pool.request();
 
       req.input("gs_user_i", username.sync());
       req.input("gs_oru_i", "NA");
