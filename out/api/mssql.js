@@ -126,17 +126,20 @@ var Dbase = /** @class */ (function (_super) {
                         // this.emit('error', new Error('whoops!')); var dbConn = new
                         // mssql.Connection(config.get(env + ".dbConfig"));
                         try {
-                            mssql.close();
+                            //mssql.close()
                         }
-                        catch (_b) {
-                        }
-                        return [4 /*yield*/, new mssql.connect(config.get(env + ".dbConfig"))];
-                    case 1:
-                        pool = _a.sent();
+                        catch (_b) { }
+                        pool = new mssql.ConnectionPool(config.get(env + ".dbConfig"));
+                        pool.on("error", function (err) {
+                            console.log("SQL errors", err);
+                        });
                         rolledBack = false;
-                        _a.label = 2;
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 11, 15, 16]);
+                        return [4 /*yield*/, pool.connect()];
                     case 2:
-                        _a.trys.push([2, 11, 15, 16]);
+                        _a.sent();
                         return [4 /*yield*/, new mssql.Transaction(pool)];
                     case 3:
                         transaction = _a.sent();
@@ -242,7 +245,7 @@ var Dbase = /** @class */ (function (_super) {
                         errDesc = err_1.message;
                         gs_Err = "-100";
                         gs_end_tm = _getTimeStamp(); //func.getTimeStamp();
-                        return [4 /*yield*/, new pool.request()];
+                        return [4 /*yield*/, pool.request()];
                     case 13:
                         //Log the database call
                         req = _a.sent();
@@ -294,12 +297,16 @@ var Dbase = /** @class */ (function (_super) {
                         parm = "";
                         gs_end_tm = "";
                         rolledBack = false;
-                        return [4 /*yield*/, mssql.connect(config.get(env + ".dbConfig"))];
+                        pool = new mssql.ConnectionPool(config.get(env + ".dbConfig"));
+                        pool.on("error", function (err) {
+                            console.log("SQL errors", err);
+                        });
+                        _a.label = 1;
                     case 1:
-                        pool = _a.sent();
-                        _a.label = 2;
+                        _a.trys.push([1, 10, 14, 15]);
+                        return [4 /*yield*/, pool.connect()];
                     case 2:
-                        _a.trys.push([2, 10, 14, 15]);
+                        _a.sent();
                         return [4 /*yield*/, new mssql.Transaction(pool)];
                     case 3:
                         //var request = new mssql.Request(dbConn);
@@ -386,7 +393,6 @@ var Dbase = /** @class */ (function (_super) {
                         return [2 /*return*/, JSON.stringify(errObject)];
                     case 14:
                         mssql.close();
-                        pool.close(); //closing connection after request is finished.
                         return [7 /*endfinally*/];
                     case 15: return [2 /*return*/];
                 }

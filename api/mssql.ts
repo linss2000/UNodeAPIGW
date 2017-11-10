@@ -21,7 +21,7 @@ let env = process.env.NODE_ENV || "Dev";
 console.log("NODE_CONFIG_DIR: " + config.util.getEnv("NODE_CONFIG_DIR"));
 
 mssql.on("error", err => {
-    console.log(err)
+  console.log(err);
   // ... error handler
 });
 //import * as async from "async";
@@ -91,12 +91,13 @@ export class Dbase extends EventEmitter {
 
     // this.emit('error', new Error('whoops!')); var dbConn = new
     // mssql.Connection(config.get(env + ".dbConfig"));
-    try{
-        //mssql.close()
-    } catch{
-
-    }
-    let pool = await new mssql.connect(config.get(env + ".dbConfig"));
+    try {
+      //mssql.close()
+    } catch {}
+    const pool = new mssql.ConnectionPool(config.get(env + ".dbConfig"));
+    pool.on("error", err => {
+      console.log("SQL errors", err);
+    });
 
     //5. await dbConn.connect();
     let rolledBack = false;
@@ -105,6 +106,8 @@ export class Dbase extends EventEmitter {
     let req;
 
     try {
+      await pool.connect();
+
       transaction = await new mssql.Transaction(pool);
 
       //transaction.begin(err =>  {
@@ -152,8 +155,8 @@ export class Dbase extends EventEmitter {
       }
 
       console.log(sqlProc + " " + parm);
-      req = await  transaction.request();
-      let data = await req.execute(sqlProc);     
+      req = await transaction.request();
+      let data = await req.execute(sqlProc);
       gs_end_tm = _getTimeStamp(); //func.getTimeStamp();
       //console.log(data)
 
@@ -174,10 +177,9 @@ export class Dbase extends EventEmitter {
       } else {
         retObject.output = {};
       }
-     
 
       //Log the database call
-      req = await  transaction.request();
+      req = await transaction.request();
 
       req.input("gs_user_i", username.sync());
       req.input("gs_oru_i", "NA");
@@ -204,7 +206,7 @@ export class Dbase extends EventEmitter {
         console.log("%%%");
         //console.log(err)
       });
-    
+
       //console.log(err.message);
       errDesc = err.message;
       gs_Err = "-100";
@@ -237,7 +239,7 @@ export class Dbase extends EventEmitter {
       //mssql.close()
       return JSON.stringify(errObject);
     } finally {
-      mssql.close()
+      mssql.close();
       //pool.close(); //closing connection after request is finished.
     }
     /*
@@ -373,10 +375,15 @@ export class Dbase extends EventEmitter {
     let rolledBack = false;
     let transaction;
 
-    let pool = await mssql.connect(config.get(env + ".dbConfig"));
+    const pool = new mssql.ConnectionPool(config.get(env + ".dbConfig"));
+    pool.on("error", err => {
+      console.log("SQL errors", err);
+    });
+
     // 5. var dbConn = new mssql.Connection(config.get(env + ".dbConfig")); await
     // dbConn.connect()
     try {
+      await pool.connect();
       //var request = new mssql.Request(dbConn);
       transaction = await new mssql.Transaction(pool);
       await transaction.begin();
@@ -453,8 +460,8 @@ export class Dbase extends EventEmitter {
       //mssql.close()
       return JSON.stringify(errObject);
     } finally {
-        mssql.close()
-      pool.close(); //closing connection after request is finished.
+      mssql.close();
+      //pool.close(); //closing connection after request is finished.
     }
   }
 
