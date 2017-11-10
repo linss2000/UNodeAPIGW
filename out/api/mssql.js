@@ -52,6 +52,15 @@ var config = require("config");
 var username = require("username");
 var os = require("os");
 var EventEmitter = require("events");
+/*
+var winston = require('winston');
+require('winston-mssql');
+
+winston.add(winston.transports.mssql, {
+    connectionString: "mssql://hvssql:hvssql@35.185.106.158/hvs",
+    table: "tNodeLogs"
+});
+*/
 //class MyEmitter extends EventEmitter{}
 /*
 myEmitter.on('event', () => {
