@@ -566,6 +566,9 @@ app.post("/GetAttribTable", async function (req, res) {
     var result;
 
     try {
+        console.log("sps_getAttribTableValues")
+        console.log( req.body.hv_table_i)
+        
         const parm = [];
         parm[0] =  req.body.hv_table_i;
         const tmpData = await DBase.DB.execSP("sps_getAttribTableValues", parm);

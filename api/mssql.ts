@@ -7,7 +7,15 @@ import * as config from "config";
 import * as username from "username";
 import * as os from "os";
 import * as EventEmitter from "events";
+/*
+var winston = require('winston');
+require('winston-mssql');
 
+winston.add(winston.transports.mssql, {
+    connectionString: "mssql://hvssql:hvssql@35.185.106.158/hvs",
+    table: "tNodeLogs"
+});
+*/
 //class MyEmitter extends EventEmitter{}
 /*
 myEmitter.on('event', () => {
@@ -94,6 +102,7 @@ export class Dbase extends EventEmitter {
     try {
       //mssql.close()
     } catch {}
+
     const pool = new mssql.ConnectionPool(config.get(env + ".dbConfig"));
     pool.on("error", err => {
       console.log("SQL errors", err);
@@ -124,6 +133,7 @@ export class Dbase extends EventEmitter {
       let hasOutput: boolean = false;
       let output_parm: any = "";
 
+      req = await transaction.request();
       //req.multiple = true;
 
       //if (result[0].length > 0) {
@@ -155,7 +165,6 @@ export class Dbase extends EventEmitter {
       }
 
       console.log(sqlProc + " " + parm);
-      req = await transaction.request();
       let data = await req.execute(sqlProc);
       gs_end_tm = _getTimeStamp(); //func.getTimeStamp();
       //console.log(data)
@@ -392,6 +401,7 @@ export class Dbase extends EventEmitter {
       let res = await pool.request(transaction);
       //res.multiple = true;
       console.log(SQL);
+      //winston.log('info', "Message.SQL=", SQL.replace(/'/g, ""));
       let data = await res.query(SQL);
 
       await transaction.commit();

@@ -158,6 +158,9 @@ var Dbase = /** @class */ (function (_super) {
                         console.log(result);
                         hasOutput_1 = false;
                         output_parm_1 = "";
+                        return [4 /*yield*/, transaction.request()];
+                    case 6:
+                        req = _a.sent();
                         //req.multiple = true;
                         //if (result[0].length > 0) {
                         if (result.recordsets.length > 0) {
@@ -187,9 +190,6 @@ var Dbase = /** @class */ (function (_super) {
                             }
                         }
                         console.log(sqlProc + " " + parm);
-                        return [4 /*yield*/, transaction.request()];
-                    case 6:
-                        req = _a.sent();
                         return [4 /*yield*/, req.execute(sqlProc)];
                     case 7:
                         data = _a.sent();

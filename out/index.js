@@ -591,6 +591,8 @@ app.post("/GetAttribTable", function (req, res) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
+                    console.log("sps_getAttribTableValues");
+                    console.log(req.body.hv_table_i);
                     parm = [];
                     parm[0] = req.body.hv_table_i;
                     return [4 /*yield*/, DBase.DB.execSP("sps_getAttribTableValues", parm)];
