@@ -537,12 +537,13 @@ app.post("/loginsvc", async function (req, res) {
     console.log(result);
 });
 
-app.post("/db", async function (req, res) {
+app.post("/getTables", async function (req, res) {
     var result;
 
     try {
       
         const parm = [];
+        parm[0] =  req.body.tableTag;
         const tmpData = await new DBase.DB.execSP("sps_getAttribTables", parm);
 
         //console.log(tmpData)
