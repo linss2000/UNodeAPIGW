@@ -254,6 +254,11 @@ app.get('/cadetexcel',async function (req, res) {
     res.download(file); // Set disposition and send it.
 });
    
+app.get('/budgetexcel',async function (req, res) {    
+    var file = __dirname + '/public/budget.xlsx';
+    res.download(file); // Set disposition and send it.
+});
+
 app.post("/toLoadSvc", passport.authenticate('jwt', { session: false }), function (req, res) {
     try {
         console.log(req.get('Authorization'))
