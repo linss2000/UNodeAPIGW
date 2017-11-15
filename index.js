@@ -395,6 +395,37 @@ app.post("/getCadets", async function (req, res) {
     //res.send(result);
 });
 
+app.post("/getMentors", async function (req, res) {
+    var result;
+    try {
+        
+        const parm = [];
+        parm[0] =  req.body.name;
+       
+        const tmpData = await new DBase.DB.execSP("sps_getMentors", parm);
+
+        //console.log(tmpData)
+        const resultObj = JSON.parse(tmpData);
+        //console.log(resultObj.data[0]);
+        if (resultObj.data[0].length > 0) {
+                   
+        var output = JSON.stringify({ "token": null, "result": {items: resultObj.data[0], msg: ""} });
+        res.status(200).json(output);
+        }else {
+            var output = JSON.stringify({ "token": null, "result": {items:{}, msg: "Not Found."}  });
+            res.status(200).json(output);
+        }
+        //console.log(resultObj.data[0][0].validToken);
+        //console.log(tmpData)
+        //console.log(tmpData.data[0].hv_auth_code)
+    } catch (e) {
+        console.log(e)
+        res.status(500).end();
+    }
+   
+    //res.send(result);
+});
+
 app.post("/changePWD", async function (req, res) {
     var result;
     try {
