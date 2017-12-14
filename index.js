@@ -836,19 +836,19 @@ app.post("/ExecSP", async function (req, res) {
 
     let spName = req.body.spName;
     let parmstr= JSON.stringify(req.body.parms);  
-    console.log(parmstr) 
+    //console.log(parmstr) 
     let parms = JSON.parse(parmstr);
-    console.log(parms)
+    //console.log(parms)
     const parm = [];
 
     try {
 
         let keyArr = Object.keys(parms);
-        console.log(keyArr);
+        //console.log(keyArr);
 
         // loop through the object, pushing values to the return array
         keyArr.forEach((key,index) => {
-          console.log(key);
+          //console.log(key);
           parm[index] = parms[key];          
         });
 
@@ -866,7 +866,9 @@ app.post("/ExecSP", async function (req, res) {
         //console.log(tmpData)
         //console.log(tmpData.data[0].hv_auth_code)
     } catch (e) {
-        res.status(500).end();
+        var output = JSON.stringify({ "message": "fail", "token": null, "result": e.message });
+        res.status(200).json(output);
+        //res.status(500).end();
     }
    
     //res.send(result);
