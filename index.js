@@ -831,6 +831,47 @@ app.post("/insAttribTable", async function (req, res) {
 });
 
 
+app.post("/ExecSP", async function (req, res) {
+    var result;
+
+    let spName = req.body.spName;
+    let parmstr= JSON.stringify(req.body.parms);  
+    console.log(parmstr) 
+    let parms = JSON.parse(parmstr);
+    console.log(parms)
+    const parm = [];
+
+    try {
+
+        let keyArr = Object.keys(parms);
+        console.log(keyArr);
+
+        // loop through the object, pushing values to the return array
+        keyArr.forEach((key,index) => {
+          console.log(key);
+          parm[index] = parms[key];          
+        });
+
+        //parm[0] =  req.body.hv_table_i;
+        //parm[1] =  req.body.hv_universal_name;
+
+        const tmpData = await DBase.DB.execSP(spName, parm);
+
+        //console.log(tmpData)
+        const resultObj = JSON.parse(tmpData);
+        console.log(resultObj.data[0]);
+        var output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
+        res.status(200).json(output);
+        //console.log(resultObj.data[0][0].validToken);
+        //console.log(tmpData)
+        //console.log(tmpData.data[0].hv_auth_code)
+    } catch (e) {
+        res.status(500).end();
+    }
+   
+    //res.send(result);
+});
+
 
 
 const api = require('./api')

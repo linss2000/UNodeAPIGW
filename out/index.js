@@ -293,6 +293,26 @@ app.get('/cadetexcel', function (req, res) {
         });
     });
 });
+app.get('/budgetexcel', function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var file;
+        return __generator(this, function (_a) {
+            file = __dirname + '/public/budget.xlsx';
+            res.download(file); // Set disposition and send it.
+            return [2 /*return*/];
+        });
+    });
+});
+app.get('/statusexcel', function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var file;
+        return __generator(this, function (_a) {
+            file = __dirname + '/public/StatusOfCadetApplications.xlsx';
+            res.download(file); // Set disposition and send it.
+            return [2 /*return*/];
+        });
+    });
+});
 app.post("/toLoadSvc", passport.authenticate('jwt', { session: false }), function (req, res) {
     try {
         console.log(req.get('Authorization'));
@@ -409,9 +429,174 @@ app.post("/getCadets", function (req, res) {
         });
     });
 });
-app.post("/changePWD", function (req, res) {
+app.post("/getMentors", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var result, parm, tmpData, resultObj, output, output, e_4;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    parm = [];
+                    parm[0] = req.body.name;
+                    return [4 /*yield*/, new DBase.DB.execSP("sps_getMentors", parm)];
+                case 1:
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    //console.log(resultObj.data[0]);
+                    if (resultObj.data[0].length > 0) {
+                        output = JSON.stringify({ "token": null, "result": { items: resultObj.data[0], msg: "" } });
+                        res.status(200).json(output);
+                    }
+                    else {
+                        output = JSON.stringify({ "token": null, "result": { items: {}, msg: "Not Found." } });
+                        res.status(200).json(output);
+                    }
+                    return [3 /*break*/, 3];
+                case 2:
+                    e_4 = _a.sent();
+                    console.log(e_4);
+                    res.status(500).end();
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+});
+app.post("/getBudgets", function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, parm, tmpData, resultObj, output, output, e_5;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    parm = [];
+                    parm[0] = req.body.name;
+                    return [4 /*yield*/, new DBase.DB.execSP("sps_getBudgets", parm)];
+                case 1:
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    //console.log(resultObj.data[0]);
+                    if (resultObj.data[0].length > 0) {
+                        output = JSON.stringify({ "token": null, "result": { items: resultObj.data[0], msg: "" } });
+                        res.status(200).json(output);
+                    }
+                    else {
+                        output = JSON.stringify({ "token": null, "result": { items: {}, msg: "Not Found." } });
+                        res.status(200).json(output);
+                    }
+                    return [3 /*break*/, 3];
+                case 2:
+                    e_5 = _a.sent();
+                    console.log(e_5);
+                    res.status(500).end();
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+});
+app.post("/getPurchases", function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, parm, tmpData, resultObj, output, output, e_6;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    parm = [];
+                    parm[0] = req.body.name;
+                    return [4 /*yield*/, new DBase.DB.execSP("sps_getPurchases", parm)];
+                case 1:
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    //console.log(resultObj.data[0]);
+                    if (resultObj.data[0].length > 0) {
+                        output = JSON.stringify({ "token": null, "result": { items: resultObj.data[0], msg: "" } });
+                        res.status(200).json(output);
+                    }
+                    else {
+                        output = JSON.stringify({ "token": null, "result": { items: {}, msg: "Not Found." } });
+                        res.status(200).json(output);
+                    }
+                    return [3 /*break*/, 3];
+                case 2:
+                    e_6 = _a.sent();
+                    console.log(e_6);
+                    res.status(500).end();
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+});
+app.post("/getApprovals", function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, parm, tmpData, resultObj, output, output, e_7;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    parm = [];
+                    parm[0] = req.body.name;
+                    return [4 /*yield*/, new DBase.DB.execSP("sps_getApprovals", parm)];
+                case 1:
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    //console.log(resultObj.data[0]);
+                    if (resultObj.data[0].length > 0) {
+                        output = JSON.stringify({ "token": null, "result": { items: resultObj.data[0], msg: "" } });
+                        res.status(200).json(output);
+                    }
+                    else {
+                        output = JSON.stringify({ "token": null, "result": { items: {}, msg: "Not Found." } });
+                        res.status(200).json(output);
+                    }
+                    return [3 /*break*/, 3];
+                case 2:
+                    e_7 = _a.sent();
+                    console.log(e_7);
+                    res.status(500).end();
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+});
+app.post("/getSchedules", function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, parm, tmpData, resultObj, output, output, e_8;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    parm = [];
+                    parm[0] = req.body.name;
+                    return [4 /*yield*/, new DBase.DB.execSP("sps_getSchedules", parm)];
+                case 1:
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    //console.log(resultObj.data[0]);
+                    if (resultObj.data[0].length > 0) {
+                        output = JSON.stringify({ "token": null, "result": { items: resultObj.data[0], msg: "" } });
+                        res.status(200).json(output);
+                    }
+                    else {
+                        output = JSON.stringify({ "token": null, "result": { items: {}, msg: "Not Found." } });
+                        res.status(200).json(output);
+                    }
+                    return [3 /*break*/, 3];
+                case 2:
+                    e_8 = _a.sent();
+                    console.log(e_8);
+                    res.status(500).end();
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+});
+app.post("/changePWD", function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, parm, tmpData, resultObj, output, output, e_9;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -439,7 +624,7 @@ app.post("/changePWD", function (req, res) {
                     }
                     return [3 /*break*/, 3];
                 case 2:
-                    e_4 = _a.sent();
+                    e_9 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -449,7 +634,7 @@ app.post("/changePWD", function (req, res) {
 });
 app.post("/checkToken", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, output, e_5;
+        var result, parm, tmpData, resultObj, output, output, e_10;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -474,7 +659,7 @@ app.post("/checkToken", function (req, res) {
                     }
                     return [3 /*break*/, 3];
                 case 2:
-                    e_5 = _a.sent();
+                    e_10 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -484,7 +669,7 @@ app.post("/checkToken", function (req, res) {
 });
 app.post("/loginsvc", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, url, name, password, parms, data, e_6, uuidv4, authId, payload, token, parm, tmpData, e_7, output, output;
+        var result, url, name, password, parms, data, e_11, uuidv4, authId, payload, token, parm, tmpData, e_12, output, output;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -516,7 +701,7 @@ app.post("/loginsvc", function (req, res) {
                     result = _a.sent();
                     return [3 /*break*/, 5];
                 case 4:
-                    e_6 = _a.sent();
+                    e_11 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 5];
                 case 5:
@@ -540,11 +725,11 @@ app.post("/loginsvc", function (req, res) {
                     tmpData = _a.sent();
                     return [3 /*break*/, 9];
                 case 8:
-                    e_7 = _a.sent();
-                    console.log(e_7);
+                    e_12 = _a.sent();
+                    console.log(e_12);
                     return [3 /*break*/, 9];
                 case 9:
-                    output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result });
+                    output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result, "name": JSON.parse(result).name });
                     res.status(200).json(output);
                     return [3 /*break*/, 11];
                 case 10:
@@ -559,14 +744,15 @@ app.post("/loginsvc", function (req, res) {
         });
     });
 });
-app.post("/db", function (req, res) {
+app.post("/getTables", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_8;
+        var result, parm, tmpData, resultObj, output, e_13;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
                     parm = [];
+                    parm[0] = req.body.tableTag;
                     return [4 /*yield*/, new DBase.DB.execSP("sps_getAttribTables", parm)];
                 case 1:
                     tmpData = _a.sent();
@@ -575,8 +761,8 @@ app.post("/db", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_8 = _a.sent();
-                    console.log(e_8);
+                    e_13 = _a.sent();
+                    console.log(e_13);
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -586,7 +772,7 @@ app.post("/db", function (req, res) {
 });
 app.post("/GetAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_9;
+        var result, parm, tmpData, resultObj, output, e_14;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -604,7 +790,7 @@ app.post("/GetAttribTable", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_9 = _a.sent();
+                    e_14 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -614,7 +800,7 @@ app.post("/GetAttribTable", function (req, res) {
 });
 app.post("/delAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_10;
+        var result, parm, tmpData, resultObj, output, e_15;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -631,7 +817,7 @@ app.post("/delAttribTable", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_10 = _a.sent();
+                    e_15 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -641,7 +827,7 @@ app.post("/delAttribTable", function (req, res) {
 });
 app.post("/updAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_11;
+        var result, parm, tmpData, resultObj, output, e_16;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -659,7 +845,7 @@ app.post("/updAttribTable", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_11 = _a.sent();
+                    e_16 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -669,7 +855,7 @@ app.post("/updAttribTable", function (req, res) {
 });
 app.post("/insAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_12;
+        var result, parm, tmpData, resultObj, output, e_17;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -686,10 +872,49 @@ app.post("/insAttribTable", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_12 = _a.sent();
+                    e_17 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
+            }
+        });
+    });
+});
+app.post("/ExecSP", function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_18;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    spName = req.body.spName;
+                    parmstr = JSON.stringify(req.body.parms);
+                    console.log(parmstr);
+                    parms = JSON.parse(parmstr);
+                    console.log(parms);
+                    parm = [];
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    keyArr = Object.keys(parms);
+                    console.log(keyArr);
+                    // loop through the object, pushing values to the return array
+                    keyArr.forEach(function (key, index) {
+                        console.log(key);
+                        parm[index] = parms[key];
+                    });
+                    return [4 /*yield*/, DBase.DB.execSP(spName, parm)];
+                case 2:
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    console.log(resultObj.data[0]);
+                    output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
+                    res.status(200).json(output);
+                    return [3 /*break*/, 4];
+                case 3:
+                    e_18 = _a.sent();
+                    res.status(500).end();
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
             }
         });
     });
