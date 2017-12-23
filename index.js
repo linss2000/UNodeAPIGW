@@ -10,7 +10,9 @@ const _ = require('lodash');
 const fs = require('fs');
 const fetch = require('node-fetch');
 const nodemailer = require('nodemailer');
+
 import * as config from "config";
+
 
 import * as os from "os";
 //const axios = require('axios');
@@ -135,8 +137,8 @@ function base64_decode(base64str, file) {
 
 
 app.use(passport.initialize());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({limit :'50mb', extended: true }));
+app.use(bodyParser.json({limit: '50mb'}));
 
 
 app.io = io.sockets.on('connection', function (socket) {
@@ -831,6 +833,46 @@ app.post("/insAttribTable", async function (req, res) {
 });
 
 
+// app.post("/saveUserDetails", async function (req, res) {
+//     var result;
+
+//     try {
+//         const parm = [];
+//         console.log("saveuserdetails");
+//         let parmstr= JSON.stringify(req.body.parms);  
+//         let parms = JSON.parse(parmstr);
+        
+//         let keyArr = Object.keys(parms);
+//         console.log(parms["hv_first_name"]);
+//         parm[0] = parms["hv_first_name"];
+//         parm[1] = parms["hv_last_name"];
+//         parm[2] = parms["hv_user_id"];
+//         parm[3] = parms["hv_pwd"];
+//         parm[4] = parms["hv_email"];
+//         parm[5] = parms["hv_mobile_no"];
+//         parm[6] = parms["hv_home_no"];
+//         parm[7] = parms["hv_other_no"];
+
+//         // let imagedata = base64ArrayBuffer.encode(parms["hv_image"]);
+//         // var imagedata = new Buffer.from(parms["hv_image"]).toString('base64');
+//         // console.log(imagedata);
+//         console.log(parms["hv_image"]);
+//         parm[8] = parms["hv_image"];
+
+//         const tmpData = await DBase.DB.execSP("spi_UserDetails", parm);
+
+//         //console.log(tmpData)
+//         const resultObj = JSON.parse(tmpData);
+//         console.log(resultObj.data[0]);
+//         var output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
+//         res.status(200).json(output);
+//     } catch (e) {
+//         var output = JSON.stringify({ "message": "fail", "token": null, "result": e.message });
+//         res.status(200).json(output);
+//     }
+  
+// });
+
 app.post("/ExecSP", async function (req, res) {
     var result;
 
@@ -879,7 +921,7 @@ app.post("/ExecSP", async function (req, res) {
 const api = require('./api')
 app.use('/api', api.router);
 app.use(express.static(__dirname + '/public'));
-
+// app.use(express.json({limit:'50mb'}));
 server.listen(PORT, () => {
     console.log(`Listening on port ${PORT}!`);
 })
