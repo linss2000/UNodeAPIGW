@@ -207,6 +207,7 @@ var Dbase = /** @class */ (function (_super) {
                         retObject.errCode = "0";
                         retObject.errDesc = "";
                         retObject.data = data.recordsets;
+                        retObject.recordset = data.recordset;
                         retObject.returnValue = data.returnValue;
                         //console.log("output")
                         if (hasOutput_1) {
@@ -334,11 +335,14 @@ var Dbase = /** @class */ (function (_super) {
                         return [4 /*yield*/, transaction.commit()];
                     case 7:
                         _a.sent();
+                        //console.log(data);
                         gs_end_tm = _getTimeStamp(); //func.getTimeStamp();
                         retObject = {};
                         retObject.errCode = "0";
                         retObject.errDesc = "";
                         retObject.data = data.recordsets;
+                        retObject.recordset = data.recordset;
+                        retObject.columns = data.recordset.columns;
                         retObject.returnValue = data.returnValue;
                         retObject.output = {};
                         return [4 /*yield*/, pool.request()];
@@ -440,6 +444,7 @@ var Dbase = /** @class */ (function (_super) {
                 retObject.errCode = "0";
                 retObject.errDesc = "";
                 retObject.data = data.recordsets;
+                retObject.recordset = data.recordset;
                 retObject.returnValue = data.returnValue;
                 retObject.output = {};
                 dbConn.close();
@@ -523,6 +528,7 @@ var Dbase = /** @class */ (function (_super) {
                 retObject.errCode = "0";
                 retObject.errDesc = "";
                 retObject.data = data.recordsets;
+                retObject.columns = data.recordset.columns;
                 retObject.returnValue = data.returnValue;
                 retObject.output = {};
                 dbConn.close();
@@ -729,6 +735,7 @@ var Dbase = /** @class */ (function (_super) {
                 retObject.errCode = "0";
                 retObject.errDesc = "";
                 retObject.data = data.recordsets;
+                retObject.recordset = data.recordset;
                 retObject.returnValue = data.returnValue;
                 //console.log("output")
                 retObject.output = data.output;

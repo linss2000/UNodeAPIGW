@@ -160,8 +160,53 @@ app.io = io.sockets.on('connection', function (socket) {
         //app.io.emit('chat-message', msg);
     })
 })
+/*
+app.get('/ExportToExcel',async function (req, res) {
+    const nodeExcel=require('excel-export');
+    const dateFormat = require('dateformat');
+    var conf={}
+    var arr=[];
 
+    conf.cols = JSON.parse(JSON.stringify(req.body.cols));
+console.log(conf.cols)
+       const parm = [];
+       console.log("Before SQL")
+       console.log(Date.now())
+        const tmpData = await DBase.DB.execSQl("select top 100 gs_id,gs_user_i,gs_oru_i,gs_Sql,gs_strt_tm,gs_end_tm,gs_err,gs_err_desc from tdblog");
 
+        console.log(tmpData)
+        const resultObj = JSON.parse(tmpData);
+        //console.log(resultObj.data[0]);
+        console.log(Date.now())
+        if (resultObj.data[0].length > 0) {
+            
+            arr=[];
+            for(var i=0;i<resultObj.data[0].length;i++){                
+                var a=[
+                    resultObj.data[0][i].gs_id,
+                    resultObj.data[0][i].gs_user_i,
+                    resultObj.data[0][i].gs_oru_i,
+                    resultObj.data[0][i].gs_Sql,
+                    (dateFormat(resultObj.data[0][i].gs_strt_tm, "mm/dd/yyyy HH:MM:ss")),
+                    (dateFormat(resultObj.data[0][i].gs_end_tm, "mm/dd/yyyy HH:MM:ss")),
+                    resultObj.data[0][i].gs_err,
+                    resultObj.data[0][i].gs_err_desc,
+                ];
+                arr.push(a);
+                }
+                conf.rows=arr;
+               
+                //conf.rows= resultObj.data[0];
+    var result=nodeExcel.execute(conf);
+    console.log(Date.now())
+    res.setHeader('Content-Type','application/vnd.openxmlformats');
+    res.setHeader("Content-Disposition","attachment;filename="+"todo.xlsx");
+    console.log(Date.now())
+    res.end(result, 'binary');
+    //res.status(200).send(new Buffer(result.toString(),'binary').toString("base64"));
+    }
+});
+*/
 
 app.get('/excel',async function (req, res) {
     const nodeExcel=require('excel-export');
@@ -830,6 +875,77 @@ app.post("/insAttribTable", async function (req, res) {
     //res.send(result);
 });
 
+app.post('/ExportToExcel',async function (req, res) {
+    const nodeExcel=require('excel-export');
+    const dateFormat = require('dateformat');
+    var conf={}
+    var arr=[];
+
+    conf.cols = JSON.parse(JSON.stringify(req.body.cols));
+    console.log(conf.cols)
+
+    let SQL = req.body.spName;
+    console.log(SQL)
+    //console.log(req.body.cols)
+    //conf.cols = JSON.parse(JSON.stringify(req.body.cols));
+    //console.log(conf.cols)
+    //conf.cols = JSON.stringify(req.body.cols);
+    //console.log(conf.cols)
+    /*
+    conf.cols=[{
+        caption:'First Name',
+        type:'string',
+        width: 50
+    },
+    {
+        caption:'Last Name',
+        type:'string',
+        width:50
+    }];
+    console.log(conf.cols)
+*/
+
+        const parm = [];
+       //console.log("Before SQL")
+       //console.log(Date.now())
+        const tmpData = await DBase.DB.execSQl(SQL);
+        //console.log(tmpData)
+        const resultObj = JSON.parse(tmpData);
+        //console.log(resultObj.data[0]);
+        //console.log(Date.now())
+        //console.log(resultObj.columns)
+        //console.log(resultObj.columns[0].name)
+    //console.log(Object.keys(resultObj.columns))
+    let colNameArr = Object.keys(resultObj.columns);
+
+        if (resultObj.data[0].length > 0) {
+            
+            arr=[];
+            for(var i=0;i<resultObj.data[0].length;i++){  
+                let a = [];
+                colNameArr.forEach((key,index) => {
+                    //console.log(key)
+                    //console.log(resultObj.data[0][i])
+                    //console.log(resultObj.data[0][i][key])                   
+                    a.push(resultObj.data[0][i][key])
+                  });
+
+               //console.log(a)
+                arr.push(a);
+                }
+                conf.rows=arr;
+           
+                //console.log(arr)
+                //conf.rows= resultObj.data[0];
+    var result=nodeExcel.execute(conf);
+    console.log(Date.now())
+    res.setHeader('Content-Type','application/vnd.openxmlformats');
+    res.setHeader("Content-Disposition","attachment;filename="+"todo.xlsx");
+    console.log(Date.now())
+    res.end(result, 'binary');
+    //res.status(200).send(new Buffer(result.toString(),'binary').toString("base64"));
+    }
+});
 
 app.post("/ExecSP", async function (req, res) {
     var result;

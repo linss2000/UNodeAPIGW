@@ -193,6 +193,53 @@ app.io = io.sockets.on('connection', function (socket) {
         //app.io.emit('chat-message', msg);
     });
 });
+/*
+app.get('/ExportToExcel',async function (req, res) {
+    const nodeExcel=require('excel-export');
+    const dateFormat = require('dateformat');
+    var conf={}
+    var arr=[];
+
+    conf.cols = JSON.parse(JSON.stringify(req.body.cols));
+console.log(conf.cols)
+       const parm = [];
+       console.log("Before SQL")
+       console.log(Date.now())
+        const tmpData = await DBase.DB.execSQl("select top 100 gs_id,gs_user_i,gs_oru_i,gs_Sql,gs_strt_tm,gs_end_tm,gs_err,gs_err_desc from tdblog");
+
+        console.log(tmpData)
+        const resultObj = JSON.parse(tmpData);
+        //console.log(resultObj.data[0]);
+        console.log(Date.now())
+        if (resultObj.data[0].length > 0) {
+            
+            arr=[];
+            for(var i=0;i<resultObj.data[0].length;i++){
+                var a=[
+                    resultObj.data[0][i].gs_id,
+                    resultObj.data[0][i].gs_user_i,
+                    resultObj.data[0][i].gs_oru_i,
+                    resultObj.data[0][i].gs_Sql,
+                    (dateFormat(resultObj.data[0][i].gs_strt_tm, "mm/dd/yyyy HH:MM:ss")),
+                    (dateFormat(resultObj.data[0][i].gs_end_tm, "mm/dd/yyyy HH:MM:ss")),
+                    resultObj.data[0][i].gs_err,
+                    resultObj.data[0][i].gs_err_desc,
+                ];
+                arr.push(a);
+                }
+                conf.rows=arr;
+               
+                //conf.rows= resultObj.data[0];
+    var result=nodeExcel.execute(conf);
+    console.log(Date.now())
+    res.setHeader('Content-Type','application/vnd.openxmlformats');
+    res.setHeader("Content-Disposition","attachment;filename="+"todo.xlsx");
+    console.log(Date.now())
+    res.end(result, 'binary');
+    //res.status(200).send(new Buffer(result.toString(),'binary').toString("base64"));
+    }
+});
+*/
 app.get('/excel', function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var nodeExcel, dateFormat, conf, arr, parm, tmpData, resultObj, i, a, result;
@@ -880,26 +927,80 @@ app.post("/insAttribTable", function (req, res) {
         });
     });
 });
+app.post('/ExportToExcel', function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var nodeExcel, dateFormat, conf, arr, SQL, parm, tmpData, resultObj, colNameArr, _loop_1, i, result;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    nodeExcel = require('excel-export');
+                    dateFormat = require('dateformat');
+                    conf = {};
+                    arr = [];
+                    conf.cols = JSON.parse(JSON.stringify(req.body.cols));
+                    console.log(conf.cols);
+                    SQL = req.body.spName;
+                    console.log(SQL);
+                    parm = [];
+                    console.log("Before SQL");
+                    console.log(Date.now());
+                    return [4 /*yield*/, DBase.DB.execSQl(SQL)];
+                case 1:
+                    tmpData = _a.sent();
+                    console.log(tmpData);
+                    resultObj = JSON.parse(tmpData);
+                    //console.log(resultObj.data[0]);
+                    console.log(Date.now());
+                    console.log(resultObj.columns);
+                    colNameArr = Object.keys(resultObj.columns);
+                    if (resultObj.data[0].length > 0) {
+                        arr = [];
+                        _loop_1 = function () {
+                            var a = [];
+                            colNameArr.forEach(function (key, index) {
+                                //console.log(key)
+                                //console.log(resultObj.data[0][i])
+                                //console.log(resultObj.data[0][i][key])                   
+                                a.push(resultObj.data[0][i][key]);
+                            });
+                            //console.log(a)
+                            arr.push(a);
+                        };
+                        for (i = 0; i < resultObj.data[0].length; i++) {
+                            _loop_1();
+                        }
+                        conf.rows = arr;
+                        result = nodeExcel.execute(conf);
+                        console.log(Date.now());
+                        res.setHeader('Content-Type', 'application/vnd.openxmlformats');
+                        res.setHeader("Content-Disposition", "attachment;filename=" + "todo.xlsx");
+                        console.log(Date.now());
+                        res.end(result, 'binary');
+                        //res.status(200).send(new Buffer(result.toString(),'binary').toString("base64"));
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+});
 app.post("/ExecSP", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_18;
+        var result, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_18, output;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     spName = req.body.spName;
                     parmstr = JSON.stringify(req.body.parms);
-                    console.log(parmstr);
                     parms = JSON.parse(parmstr);
-                    console.log(parms);
                     parm = [];
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, , 4]);
                     keyArr = Object.keys(parms);
-                    console.log(keyArr);
+                    //console.log(keyArr);
                     // loop through the object, pushing values to the return array
                     keyArr.forEach(function (key, index) {
-                        console.log(key);
+                        //console.log(key);
                         parm[index] = parms[key];
                     });
                     return [4 /*yield*/, DBase.DB.execSP(spName, parm)];
@@ -912,7 +1013,8 @@ app.post("/ExecSP", function (req, res) {
                     return [3 /*break*/, 4];
                 case 3:
                     e_18 = _a.sent();
-                    res.status(500).end();
+                    output = JSON.stringify({ "message": "fail", "token": null, "result": e_18.message });
+                    res.status(200).json(output);
                     return [3 /*break*/, 4];
                 case 4: return [2 /*return*/];
             }

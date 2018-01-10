@@ -179,6 +179,7 @@ export class Dbase extends EventEmitter {
       retObject.errCode = "0";
       retObject.errDesc = "";
       retObject.data = data.recordsets;
+      retObject.recordset = data.recordset;
       retObject.returnValue = data.returnValue;
       //console.log("output")
       if (hasOutput) {
@@ -406,11 +407,14 @@ export class Dbase extends EventEmitter {
 
       await transaction.commit();
 
+      //console.log(data);
       gs_end_tm = _getTimeStamp(); //func.getTimeStamp();
       let retObject: any = {};
       retObject.errCode = "0";
       retObject.errDesc = "";
       retObject.data = data.recordsets;
+      retObject.recordset = data.recordset;
+      retObject.columns = data.recordset.columns;
       retObject.returnValue = data.returnValue;
       retObject.output = {};
 
@@ -509,6 +513,7 @@ export class Dbase extends EventEmitter {
             retObject.errCode = "0";
             retObject.errDesc = "";
             retObject.data = data.recordsets;
+            retObject.recordset = data.recordset;
             retObject.returnValue = data.returnValue;
             retObject.output = {};
 
@@ -601,6 +606,7 @@ export class Dbase extends EventEmitter {
             retObject.errCode = "0";
             retObject.errDesc = "";
             retObject.data = data.recordsets;
+            retObject.columns = data.recordset.columns;
             retObject.returnValue = data.returnValue;
             retObject.output = {};
 
@@ -835,6 +841,7 @@ export class Dbase extends EventEmitter {
             retObject.errCode = "0";
             retObject.errDesc = "";
             retObject.data = data.recordsets;
+            retObject.recordset = data.recordset;
             retObject.returnValue = data.returnValue;
             //console.log("output")
             retObject.output = data.output;
