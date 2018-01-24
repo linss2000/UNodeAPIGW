@@ -172,8 +172,8 @@ function base64_decode(base64str, file) {
     console.log('******** File created from base64 encoded string ********');
 }
 app.use(passport.initialize());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+app.use(bodyParser.json({ limit: '50mb' }));
 app.io = io.sockets.on('connection', function (socket) {
     console.log('a user connected');
     //send Ping to client connection
@@ -937,21 +937,17 @@ app.post('/ExportToExcel', function (req, res) {
                     dateFormat = require('dateformat');
                     conf = {};
                     arr = [];
+                    conf.stylesXmlFile = "./styles.xml";
+                    conf.name = "mysheet";
                     conf.cols = JSON.parse(JSON.stringify(req.body.cols));
                     console.log(conf.cols);
                     SQL = req.body.spName;
                     console.log(SQL);
                     parm = [];
-                    console.log("Before SQL");
-                    console.log(Date.now());
                     return [4 /*yield*/, DBase.DB.execSQl(SQL)];
                 case 1:
                     tmpData = _a.sent();
-                    console.log(tmpData);
                     resultObj = JSON.parse(tmpData);
-                    //console.log(resultObj.data[0]);
-                    console.log(Date.now());
-                    console.log(resultObj.columns);
                     colNameArr = Object.keys(resultObj.columns);
                     if (resultObj.data[0].length > 0) {
                         arr = [];
@@ -983,6 +979,39 @@ app.post('/ExportToExcel', function (req, res) {
         });
     });
 });
+// app.post("/saveUserDetails", async function (req, res) {
+//     var result;
+//     try {
+//         const parm = [];
+//         console.log("saveuserdetails");
+//         let parmstr= JSON.stringify(req.body.parms);  
+//         let parms = JSON.parse(parmstr);
+//         let keyArr = Object.keys(parms);
+//         console.log(parms["hv_first_name"]);
+//         parm[0] = parms["hv_first_name"];
+//         parm[1] = parms["hv_last_name"];
+//         parm[2] = parms["hv_user_id"];
+//         parm[3] = parms["hv_pwd"];
+//         parm[4] = parms["hv_email"];
+//         parm[5] = parms["hv_mobile_no"];
+//         parm[6] = parms["hv_home_no"];
+//         parm[7] = parms["hv_other_no"];
+//         // let imagedata = base64ArrayBuffer.encode(parms["hv_image"]);
+//         // var imagedata = new Buffer.from(parms["hv_image"]).toString('base64');
+//         // console.log(imagedata);
+//         console.log(parms["hv_image"]);
+//         parm[8] = parms["hv_image"];
+//         const tmpData = await DBase.DB.execSP("spi_UserDetails", parm);
+//         //console.log(tmpData)
+//         const resultObj = JSON.parse(tmpData);
+//         console.log(resultObj.data[0]);
+//         var output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
+//         res.status(200).json(output);
+//     } catch (e) {
+//         var output = JSON.stringify({ "message": "fail", "token": null, "result": e.message });
+//         res.status(200).json(output);
+//     }
+// });
 app.post("/ExecSP", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var result, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_18, output;
@@ -1024,6 +1053,7 @@ app.post("/ExecSP", function (req, res) {
 var api = require('./api');
 app.use('/api', api.router);
 app.use(express.static(__dirname + '/public'));
+// app.use(express.json({limit:'50mb'}));
 server.listen(PORT, function () {
     console.log("Listening on port " + PORT + "!");
 });

@@ -214,6 +214,7 @@ app.get('/excel',async function (req, res) {
     const nodeExcel=require('excel-export');
     const dateFormat = require('dateformat');
     var conf={}
+   
     var arr=[];
 
     conf.cols=[{
@@ -883,6 +884,9 @@ app.post('/ExportToExcel',async function (req, res) {
     var conf={}
     var arr=[];
 
+    conf.stylesXmlFile = "./styles.xml";
+    conf.name="mysheet";
+    
     conf.cols = JSON.parse(JSON.stringify(req.body.cols));
     console.log(conf.cols)
 
@@ -1019,6 +1023,49 @@ app.post("/ExecSP", async function (req, res) {
         const resultObj = JSON.parse(tmpData);
         console.log(resultObj.data[0]);
         var output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
+        res.status(200).json(output);
+        //console.log(resultObj.data[0][0].validToken);
+        //console.log(tmpData)
+        //console.log(tmpData.data[0].hv_auth_code)
+    } catch (e) {
+        var output = JSON.stringify({ "message": "fail", "token": null, "result": e.message });
+        res.status(200).json(output);
+        //res.status(500).end();
+    }
+   
+    //res.send(result);
+});
+
+app.post("/ExecSPM", async function (req, res) {
+    var result;
+
+    let spName = req.body.spName;
+    let parmstr= JSON.stringify(req.body.parms);  
+    //console.log(parmstr) 
+    let parms = JSON.parse(parmstr);
+    //console.log(parms)
+    const parm = [];
+
+    try {
+
+        let keyArr = Object.keys(parms);
+        //console.log(keyArr);
+
+        // loop through the object, pushing values to the return array
+        keyArr.forEach((key,index) => {
+          //console.log(key);
+          parm[index] = parms[key];          
+        });
+
+        //parm[0] =  req.body.hv_table_i;
+        //parm[1] =  req.body.hv_universal_name;
+
+        const tmpData = await DBase.DB.execSP(spName, parm);
+
+        //console.log(tmpData)
+        const resultObj = JSON.parse(tmpData);
+        //console.log(resultObj.data[0]);
+        var output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data });
         res.status(200).json(output);
         //console.log(resultObj.data[0][0].validToken);
         //console.log(tmpData)
