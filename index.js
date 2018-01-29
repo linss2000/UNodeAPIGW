@@ -12,6 +12,7 @@ const fetch = require('node-fetch');
 const nodemailer = require('nodemailer');
 
 import * as config from "config";
+import * as wrap from 'express-async-wrap';
 
 
 import * as os from "os";
@@ -26,32 +27,44 @@ jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader();
 jwtOptions.secretOrKey = 'tasmanianDevil';
 
 
-var strategy = new JwtStrategy(jwtOptions, async (jwt_payload, next) => {
+var strategy = new JwtStrategy(jwtOptions,  function (jwt_payload, next) {
+   
     console.log('payload received', jwt_payload);
     const tmpData,resultObj;
+    
     //Log the token in database
     try {
         var parm = [];        
         parm[0] = jwt_payload.authID;
-
-        tmpData = await DBase.DB.execSP("sps_checktoken", parm);
-        //console.log(tmpData)
+        /*
+        tmpData =  DBase.DB.execSP("sps_checktoken", parm);
+        console.log(tmpData)
         resultObj = JSON.parse(tmpData);
         console.log(resultObj.data[0]);
         console.log(resultObj.data[0][0].validToken);
-
+        */
     } catch (e) {
         console.log(e)
         //res.status(500).end();
     }
 
+    next(null,true)
+    /*
     if(resultObj.data[0][0].validToken == "Y") {
-        next(null, true);
+         next(null, true);
     } else {
-        next(null, true);
-    }
+         next(null, false);
+    }*/
     
 });
+
+function wrapMiddleware(fn) {
+    return function(req, res, next) {
+      // If promise resolves, call `next()` with no args, otherwise call `next()`
+      // with the error from the promise rejection
+      fn(req).then(() => next(), next);
+    };
+  }
 
 passport.use(strategy);
 
@@ -86,6 +99,44 @@ app.use('*', async function (req, res, next) {
     //res.header("Accept", "q=0.8;application/json;q=0.9"); ,
     //res.header("Connection", "keep-alive");
     console.log('Time:', Date.now())
+
+    /*
+    token = token.toString().replace("JWT ", "")
+    console.log(token);
+    var originalDecoded = jwt.decode(token, { complete: true });
+    console.log(JSON.stringify(originalDecoded));
+
+    var refreshed = jwt.refresh(originalDecoded, 300, jwtOptions.secretOrKey);
+    // new 'exp' value is later in the future. 
+    console.log(JSON.stringify(jwt.decode(refreshed, { complete: true })));
+
+    // check header or url parameters or post parameters for token
+    var token = req.body.token || req.query.token || req.headers['x-access-token'];
+    //token = token.toString().replace("JWT ", "")
+    console.log(token);
+    // decode token
+    if (token) {
+        // verifies secret and checks exp
+        jwt.verify(token,jwtOptions.secretOrKey, function(err, decoded) {      
+        if (err) {
+            return res.json({ success: false, message: 'Failed to authenticate token.' });    
+        } else {
+            // if everything is good, save to request for use in other routes
+            req.decoded = decoded;    
+            next();
+        }
+        });
+    
+    } else {    
+        // if there is no token
+        // return an error
+        return res.status(403).send({ 
+            success: false, 
+            message: 'No token provided.' 
+        });
+    
+    }
+    */
     //console.log(await getURLs('db'));
     next()
 });
@@ -314,7 +365,7 @@ app.get('/statusexcel',async function (req, res) {
 
 
 
-app.post("/toLoadSvc", passport.authenticate('jwt', { session: false }), function (req, res) {
+app.post("/toLoadSvc",  passport.authenticate('jwt', { session: false }), function (req, res) {
     try {
         console.log(req.get('Authorization'))
         var token = req.get('Authorization');
@@ -422,7 +473,8 @@ app.post("/sendEmail", async function (req, res) {
 app.post("/getCadets", async function (req, res) {
     var result;
     try {
-        
+
+     
         const parm = [];
         parm[0] =  req.body.name;
        
@@ -993,8 +1045,94 @@ app.post('/ExportToExcel',async function (req, res) {
   
 // });
 
-app.post("/ExecSP", async function (req, res) {
+const checkToken = async (token) => {
+   
+    console.log('payload received', token);
+    const tmpData,resultObj;
+    
+    //Log the token in database
+    try {
+        var parm = [];        
+        parm[0] = token;
+       
+        tmpData =  await DBase.DB.execSP("sps_checktoken", parm);
+        console.log(tmpData)
+        resultObj = JSON.parse(tmpData);
+        console.log(resultObj.data[0]);
+        console.log(resultObj.data[0][0].validToken);
+       
+    } catch (e) {
+        console.log(e)
+        //res.status(500).end();
+    }
+
+    if(resultObj.data[0][0].validToken == "Y") {
+        return true;
+    } else {
+        return false;
+    }
+};
+
+
+app.post("/ExecSP",   async function (req, res, next) {
     var result;
+    var refreshedToken = null;
+    //console.log("execSp")
+    //console.log(req)
+    console.log(req.body.token)
+    //console.log(config.get(env + ".token").timeout);
+
+    /*
+    passport.authenticate('jwt', function (err,user,info) {
+        if(err) { return next(err); }
+        console.log(user)
+        console.log(info)
+    }
+    )(req,res,next);
+    */
+
+    //passport.authenticate('jwt', { session: false }),
+    //console.log(req.get('Authorization'))
+    if(req.body.token) {
+        var token = req.body.token;//req.get('Authorization');
+        token = token.toString().replace("JWT ", "")
+
+        //console.log(token);
+        var originalDecoded = jwt.decode(token, { complete: true });
+        //console.log(JSON.stringify(originalDecoded));
+        //console.log(originalDecoded.payload.authID);
+        //console.log( Number(originalDecoded.payload.exp))
+        //console.log((Date.now().valueOf()/ 1000))
+        //console.log(new Date(originalDecoded.payload.exp * 1000))
+
+        
+        if( Number(originalDecoded.payload.exp) < (Date.now().valueOf() / 1000)) {
+            //var output = JSON.stringify({ status:400, "token": null, message:"Token expired." });
+            return res.status(400).json({ "message": "fail", "token": null,  "result": "Token expired." });
+            //var output = JSON.stringify({ "message": "fail", "token": null, "result": "Token expired." });
+            //return res.status(400).json(output);
+        }
+        
+        var retVal = await checkToken(originalDecoded.payload.authID)
+        if(!retVal) {
+            var output = JSON.stringify({ "message": "fail", "token": null, "result": "Not a valid token." });
+            return res.status(400).json(output);
+        }
+        //var output = JSON.stringify({ "message": "fail", "token": null, "result": "expired" });
+        //res.status(200).json(output);
+
+        refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);
+        console.log(refreshedToken)
+        // new 'exp' value is later in the future. 
+        //console.log(JSON.stringify(jwt.decode(refreshed, { complete: true })));           
+        
+    } else {    
+        // if there is no token
+        // return an error
+        var output = JSON.stringify({ "message": "fail", "token": null, "result": "No token provided." });
+        return res.status(400).json(output);
+    }
+  
 
     let spName = req.body.spName;
     let parmstr= JSON.stringify(req.body.parms);  
@@ -1017,19 +1155,19 @@ app.post("/ExecSP", async function (req, res) {
         //parm[0] =  req.body.hv_table_i;
         //parm[1] =  req.body.hv_universal_name;
 
-        const tmpData = await DBase.DB.execSP(spName, parm);
+        const tmpData =  await DBase.DB.execSP(spName, parm);
 
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);
         console.log(resultObj.data[0]);
-        var output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
+        var output = JSON.stringify({ "message": "ok", "token": refreshedToken, "result": resultObj.data[0] });
         res.status(200).json(output);
         //console.log(resultObj.data[0][0].validToken);
         //console.log(tmpData)
         //console.log(tmpData.data[0].hv_auth_code)
     } catch (e) {
         var output = JSON.stringify({ "message": "fail", "token": null, "result": e.message });
-        res.status(200).json(output);
+        res.status(400).json(output);
         //res.status(500).end();
     }
    

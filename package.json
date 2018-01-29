@@ -25,6 +25,7 @@
     "dateformat": "^3.0.2",
     "excel-export": "^0.5.1",
     "express": "^4.13.4",
+    "express-async-wrap": "^1.0.0",
     "jsonwebtoken": "^7.3.0",
     "jsonwebtoken-refresh": "^5.7.0",
     "lodash": "^4.17.4",

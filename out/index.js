@@ -46,6 +46,7 @@ var _ = require('lodash');
 var fs = require('fs');
 var fetch = require('node-fetch');
 var nodemailer = require('nodemailer');
+var config = require("config");
 //const axios = require('axios');
 var ExtractJwt = passportJWT.ExtractJwt;
 var JwtStrategy = passportJWT.Strategy;
@@ -53,40 +54,40 @@ var env = process.env.NODE_ENV || "Dev";
 var jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader();
 jwtOptions.secretOrKey = 'tasmanianDevil';
-var strategy = new JwtStrategy(jwtOptions, function (jwt_payload, next) { return __awaiter(_this, void 0, void 0, function () {
-    var tmpData, resultObj, parm, e_1;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                console.log('payload received', jwt_payload);
-                _a.label = 1;
-            case 1:
-                _a.trys.push([1, 3, , 4]);
-                parm = [];
-                parm[0] = jwt_payload.authID;
-                return [4 /*yield*/, DBase.DB.execSP("sps_checktoken", parm)];
-            case 2:
-                tmpData = _a.sent();
-                //console.log(tmpData)
-                resultObj = JSON.parse(tmpData);
-                console.log(resultObj.data[0]);
-                console.log(resultObj.data[0][0].validToken);
-                return [3 /*break*/, 4];
-            case 3:
-                e_1 = _a.sent();
-                console.log(e_1);
-                return [3 /*break*/, 4];
-            case 4:
-                if (resultObj.data[0][0].validToken == "Y") {
-                    next(null, true);
-                }
-                else {
-                    next(null, true);
-                }
-                return [2 /*return*/];
-        }
-    });
-}); });
+var strategy = new JwtStrategy(jwtOptions, function (jwt_payload, next) {
+    console.log('payload received', jwt_payload);
+    var tmpData, resultObj;
+    //Log the token in database
+    try {
+        var parm = [];
+        parm[0] = jwt_payload.authID;
+        /*
+        tmpData =  DBase.DB.execSP("sps_checktoken", parm);
+        console.log(tmpData)
+        resultObj = JSON.parse(tmpData);
+        console.log(resultObj.data[0]);
+        console.log(resultObj.data[0][0].validToken);
+        */
+    }
+    catch (e) {
+        console.log(e);
+        //res.status(500).end();
+    }
+    next(null, true);
+    /*
+    if(resultObj.data[0][0].validToken == "Y") {
+         next(null, true);
+    } else {
+         next(null, false);
+    }*/
+});
+function wrapMiddleware(fn) {
+    return function (req, res, next) {
+        // If promise resolves, call `next()` with no args, otherwise call `next()`
+        // with the error from the promise rejection
+        fn(req).then(function () { return next(); }, next);
+    };
+}
 passport.use(strategy);
 //const env = require("env.js");
 var PORT = process.env.PORT || 3003;
@@ -118,6 +119,43 @@ app.use('*', function (req, res, next) {
             //res.header("Accept", "q=0.8;application/json;q=0.9"); ,
             //res.header("Connection", "keep-alive");
             console.log('Time:', Date.now());
+            /*
+            token = token.toString().replace("JWT ", "")
+            console.log(token);
+            var originalDecoded = jwt.decode(token, { complete: true });
+            console.log(JSON.stringify(originalDecoded));
+        
+            var refreshed = jwt.refresh(originalDecoded, 300, jwtOptions.secretOrKey);
+            // new 'exp' value is later in the future.
+            console.log(JSON.stringify(jwt.decode(refreshed, { complete: true })));
+        
+            // check header or url parameters or post parameters for token
+            var token = req.body.token || req.query.token || req.headers['x-access-token'];
+            //token = token.toString().replace("JWT ", "")
+            console.log(token);
+            // decode token
+            if (token) {
+                // verifies secret and checks exp
+                jwt.verify(token,jwtOptions.secretOrKey, function(err, decoded) {
+                if (err) {
+                    return res.json({ success: false, message: 'Failed to authenticate token.' });
+                } else {
+                    // if everything is good, save to request for use in other routes
+                    req.decoded = decoded;
+                    next();
+                }
+                });
+            
+            } else {
+                // if there is no token
+                // return an error
+                return res.status(403).send({
+                    success: false,
+                    message: 'No token provided.'
+                });
+            
+            }
+            */
             //console.log(await getURLs('db'));
             next();
             return [2 /*return*/];
@@ -383,7 +421,7 @@ app.post("/toLoadSvc", passport.authenticate('jwt', { session: false }), functio
 });
 app.post("/sendEmail", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, transporter, htm, mailOptions, output, output, e_2;
+        var result, parm, tmpData, resultObj, transporter, htm, mailOptions, output, output, e_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -435,7 +473,7 @@ app.post("/sendEmail", function (req, res) {
                     }
                     return [3 /*break*/, 3];
                 case 2:
-                    e_2 = _a.sent();
+                    e_1 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -445,7 +483,7 @@ app.post("/sendEmail", function (req, res) {
 });
 app.post("/getCadets", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, output, e_3;
+        var result, parm, tmpData, resultObj, output, output, e_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -453,6 +491,39 @@ app.post("/getCadets", function (req, res) {
                     parm = [];
                     parm[0] = req.body.name;
                     return [4 /*yield*/, new DBase.DB.execSP("sps_getcadets", parm)];
+                case 1:
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    //console.log(resultObj.data[0]);
+                    if (resultObj.data[0].length > 0) {
+                        output = JSON.stringify({ "token": null, "result": { items: resultObj.data[0], msg: "" } });
+                        res.status(200).json(output);
+                    }
+                    else {
+                        output = JSON.stringify({ "token": null, "result": { items: {}, msg: "Not Found." } });
+                        res.status(200).json(output);
+                    }
+                    return [3 /*break*/, 3];
+                case 2:
+                    e_2 = _a.sent();
+                    console.log(e_2);
+                    res.status(500).end();
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+});
+app.post("/getMentors", function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, parm, tmpData, resultObj, output, output, e_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    parm = [];
+                    parm[0] = req.body.name;
+                    return [4 /*yield*/, new DBase.DB.execSP("sps_getMentors", parm)];
                 case 1:
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
@@ -476,7 +547,7 @@ app.post("/getCadets", function (req, res) {
         });
     });
 });
-app.post("/getMentors", function (req, res) {
+app.post("/getBudgets", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var result, parm, tmpData, resultObj, output, output, e_4;
         return __generator(this, function (_a) {
@@ -485,7 +556,7 @@ app.post("/getMentors", function (req, res) {
                     _a.trys.push([0, 2, , 3]);
                     parm = [];
                     parm[0] = req.body.name;
-                    return [4 /*yield*/, new DBase.DB.execSP("sps_getMentors", parm)];
+                    return [4 /*yield*/, new DBase.DB.execSP("sps_getBudgets", parm)];
                 case 1:
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
@@ -509,7 +580,7 @@ app.post("/getMentors", function (req, res) {
         });
     });
 });
-app.post("/getBudgets", function (req, res) {
+app.post("/getPurchases", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var result, parm, tmpData, resultObj, output, output, e_5;
         return __generator(this, function (_a) {
@@ -518,7 +589,7 @@ app.post("/getBudgets", function (req, res) {
                     _a.trys.push([0, 2, , 3]);
                     parm = [];
                     parm[0] = req.body.name;
-                    return [4 /*yield*/, new DBase.DB.execSP("sps_getBudgets", parm)];
+                    return [4 /*yield*/, new DBase.DB.execSP("sps_getPurchases", parm)];
                 case 1:
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
@@ -542,7 +613,7 @@ app.post("/getBudgets", function (req, res) {
         });
     });
 });
-app.post("/getPurchases", function (req, res) {
+app.post("/getApprovals", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var result, parm, tmpData, resultObj, output, output, e_6;
         return __generator(this, function (_a) {
@@ -551,7 +622,7 @@ app.post("/getPurchases", function (req, res) {
                     _a.trys.push([0, 2, , 3]);
                     parm = [];
                     parm[0] = req.body.name;
-                    return [4 /*yield*/, new DBase.DB.execSP("sps_getPurchases", parm)];
+                    return [4 /*yield*/, new DBase.DB.execSP("sps_getApprovals", parm)];
                 case 1:
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
@@ -575,7 +646,7 @@ app.post("/getPurchases", function (req, res) {
         });
     });
 });
-app.post("/getApprovals", function (req, res) {
+app.post("/getSchedules", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
         var result, parm, tmpData, resultObj, output, output, e_7;
         return __generator(this, function (_a) {
@@ -584,7 +655,7 @@ app.post("/getApprovals", function (req, res) {
                     _a.trys.push([0, 2, , 3]);
                     parm = [];
                     parm[0] = req.body.name;
-                    return [4 /*yield*/, new DBase.DB.execSP("sps_getApprovals", parm)];
+                    return [4 /*yield*/, new DBase.DB.execSP("sps_getSchedules", parm)];
                 case 1:
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
@@ -608,42 +679,9 @@ app.post("/getApprovals", function (req, res) {
         });
     });
 });
-app.post("/getSchedules", function (req, res) {
-    return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, output, e_8;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 2, , 3]);
-                    parm = [];
-                    parm[0] = req.body.name;
-                    return [4 /*yield*/, new DBase.DB.execSP("sps_getSchedules", parm)];
-                case 1:
-                    tmpData = _a.sent();
-                    resultObj = JSON.parse(tmpData);
-                    //console.log(resultObj.data[0]);
-                    if (resultObj.data[0].length > 0) {
-                        output = JSON.stringify({ "token": null, "result": { items: resultObj.data[0], msg: "" } });
-                        res.status(200).json(output);
-                    }
-                    else {
-                        output = JSON.stringify({ "token": null, "result": { items: {}, msg: "Not Found." } });
-                        res.status(200).json(output);
-                    }
-                    return [3 /*break*/, 3];
-                case 2:
-                    e_8 = _a.sent();
-                    console.log(e_8);
-                    res.status(500).end();
-                    return [3 /*break*/, 3];
-                case 3: return [2 /*return*/];
-            }
-        });
-    });
-});
 app.post("/changePWD", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, output, e_9;
+        var result, parm, tmpData, resultObj, output, output, e_8;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -671,7 +709,7 @@ app.post("/changePWD", function (req, res) {
                     }
                     return [3 /*break*/, 3];
                 case 2:
-                    e_9 = _a.sent();
+                    e_8 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -681,7 +719,7 @@ app.post("/changePWD", function (req, res) {
 });
 app.post("/checkToken", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, output, e_10;
+        var result, parm, tmpData, resultObj, output, output, e_9;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -706,7 +744,7 @@ app.post("/checkToken", function (req, res) {
                     }
                     return [3 /*break*/, 3];
                 case 2:
-                    e_10 = _a.sent();
+                    e_9 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -716,7 +754,7 @@ app.post("/checkToken", function (req, res) {
 });
 app.post("/loginsvc", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, url, name, password, parms, data, e_11, uuidv4, authId, payload, token, parm, tmpData, e_12, output, output;
+        var result, url, name, password, parms, data, e_10, uuidv4, authId, payload, token, parm, tmpData, e_11, output, output;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -748,7 +786,7 @@ app.post("/loginsvc", function (req, res) {
                     result = _a.sent();
                     return [3 /*break*/, 5];
                 case 4:
-                    e_11 = _a.sent();
+                    e_10 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 5];
                 case 5:
@@ -772,8 +810,8 @@ app.post("/loginsvc", function (req, res) {
                     tmpData = _a.sent();
                     return [3 /*break*/, 9];
                 case 8:
-                    e_12 = _a.sent();
-                    console.log(e_12);
+                    e_11 = _a.sent();
+                    console.log(e_11);
                     return [3 /*break*/, 9];
                 case 9:
                     output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result, "name": JSON.parse(result).name });
@@ -793,7 +831,7 @@ app.post("/loginsvc", function (req, res) {
 });
 app.post("/getTables", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_13;
+        var result, parm, tmpData, resultObj, output, e_12;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -808,8 +846,8 @@ app.post("/getTables", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_13 = _a.sent();
-                    console.log(e_13);
+                    e_12 = _a.sent();
+                    console.log(e_12);
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -819,7 +857,7 @@ app.post("/getTables", function (req, res) {
 });
 app.post("/GetAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_14;
+        var result, parm, tmpData, resultObj, output, e_13;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -837,7 +875,7 @@ app.post("/GetAttribTable", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_14 = _a.sent();
+                    e_13 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -847,7 +885,7 @@ app.post("/GetAttribTable", function (req, res) {
 });
 app.post("/delAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_15;
+        var result, parm, tmpData, resultObj, output, e_14;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -864,7 +902,7 @@ app.post("/delAttribTable", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_15 = _a.sent();
+                    e_14 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -874,7 +912,7 @@ app.post("/delAttribTable", function (req, res) {
 });
 app.post("/updAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_16;
+        var result, parm, tmpData, resultObj, output, e_15;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -892,7 +930,7 @@ app.post("/updAttribTable", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_16 = _a.sent();
+                    e_15 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -902,7 +940,7 @@ app.post("/updAttribTable", function (req, res) {
 });
 app.post("/insAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_17;
+        var result, parm, tmpData, resultObj, output, e_16;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -919,7 +957,7 @@ app.post("/insAttribTable", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_17 = _a.sent();
+                    e_16 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -1012,9 +1050,116 @@ app.post('/ExportToExcel', function (req, res) {
 //         res.status(200).json(output);
 //     }
 // });
-app.post("/ExecSP", function (req, res) {
+var checkToken = function (token) { return __awaiter(_this, void 0, void 0, function () {
+    var tmpData, resultObj, parm, e_17;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                console.log('payload received', token);
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, , 4]);
+                parm = [];
+                parm[0] = token;
+                return [4 /*yield*/, DBase.DB.execSP("sps_checktoken", parm)];
+            case 2:
+                tmpData = _a.sent();
+                console.log(tmpData);
+                resultObj = JSON.parse(tmpData);
+                console.log(resultObj.data[0]);
+                console.log(resultObj.data[0][0].validToken);
+                return [3 /*break*/, 4];
+            case 3:
+                e_17 = _a.sent();
+                console.log(e_17);
+                return [3 /*break*/, 4];
+            case 4:
+                if (resultObj.data[0][0].validToken == "Y") {
+                    return [2 /*return*/, true];
+                }
+                else {
+                    return [2 /*return*/, false];
+                }
+                return [2 /*return*/];
+        }
+    });
+}); };
+app.post("/ExecSP", function (req, res, next) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_18, output;
+        var result, refreshedToken, token, originalDecoded, retVal, output, output, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_18, output;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    refreshedToken = null;
+                    //console.log("execSp")
+                    //console.log(req)
+                    console.log(req.body.token);
+                    if (!req.body.token) return [3 /*break*/, 2];
+                    token = req.body.token;
+                    token = token.toString().replace("JWT ", "");
+                    originalDecoded = jwt.decode(token, { complete: true });
+                    //console.log(JSON.stringify(originalDecoded));
+                    //console.log(originalDecoded.payload.authID);
+                    //console.log( Number(originalDecoded.payload.exp))
+                    //console.log((Date.now().valueOf()/ 1000))
+                    //console.log(new Date(originalDecoded.payload.exp * 1000))
+                    if (Number(originalDecoded.payload.exp) < (Date.now().valueOf() / 1000)) {
+                        //var output = JSON.stringify({ status:400, "token": null, message:"Token expired." });
+                        return [2 /*return*/, res.status(400).json({ "message": "fail", "token": null, "result": "Token expired." })];
+                        //var output = JSON.stringify({ "message": "fail", "token": null, "result": "Token expired." });
+                        //return res.status(400).json(output);
+                    }
+                    return [4 /*yield*/, checkToken(originalDecoded.payload.authID)];
+                case 1:
+                    retVal = _a.sent();
+                    if (!retVal) {
+                        output = JSON.stringify({ "message": "fail", "token": null, "result": "Not a valid token." });
+                        return [2 /*return*/, res.status(400).json(output)];
+                    }
+                    //var output = JSON.stringify({ "message": "fail", "token": null, "result": "expired" });
+                    //res.status(200).json(output);
+                    refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);
+                    console.log(refreshedToken);
+                    return [3 /*break*/, 3];
+                case 2:
+                    output = JSON.stringify({ "message": "fail", "token": null, "result": "No token provided." });
+                    return [2 /*return*/, res.status(400).json(output)];
+                case 3:
+                    spName = req.body.spName;
+                    parmstr = JSON.stringify(req.body.parms);
+                    parms = JSON.parse(parmstr);
+                    parm = [];
+                    _a.label = 4;
+                case 4:
+                    _a.trys.push([4, 6, , 7]);
+                    keyArr = Object.keys(parms);
+                    //console.log(keyArr);
+                    // loop through the object, pushing values to the return array
+                    keyArr.forEach(function (key, index) {
+                        //console.log(key);
+                        parm[index] = parms[key];
+                    });
+                    return [4 /*yield*/, DBase.DB.execSP(spName, parm)];
+                case 5:
+                    tmpData = _a.sent();
+                    resultObj = JSON.parse(tmpData);
+                    console.log(resultObj.data[0]);
+                    output = JSON.stringify({ "message": "ok", "token": refreshedToken, "result": resultObj.data[0] });
+                    res.status(200).json(output);
+                    return [3 /*break*/, 7];
+                case 6:
+                    e_18 = _a.sent();
+                    output = JSON.stringify({ "message": "fail", "token": null, "result": e_18.message });
+                    res.status(400).json(output);
+                    return [3 /*break*/, 7];
+                case 7: return [2 /*return*/];
+            }
+        });
+    });
+});
+app.post("/ExecSPM", function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_19, output;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -1036,13 +1181,12 @@ app.post("/ExecSP", function (req, res) {
                 case 2:
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
-                    console.log(resultObj.data[0]);
-                    output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data[0] });
+                    output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data });
                     res.status(200).json(output);
                     return [3 /*break*/, 4];
                 case 3:
-                    e_18 = _a.sent();
-                    output = JSON.stringify({ "message": "fail", "token": null, "result": e_18.message });
+                    e_19 = _a.sent();
+                    output = JSON.stringify({ "message": "fail", "token": null, "result": e_19.message });
                     res.status(200).json(output);
                     return [3 /*break*/, 4];
                 case 4: return [2 /*return*/];
