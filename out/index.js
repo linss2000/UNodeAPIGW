@@ -37,8 +37,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 var _this = this;
 exports.__esModule = true;
 var jwt = require('jsonwebtoken-refresh');
-var passport = require('passport');
-var passportJWT = require('passport-jwt');
+//const passport = require('passport');
+//const passportJWT = require('passport-jwt');
 var mssql = require('mssql');
 var DBase = require('./api/mssql');
 var stream = require('stream');
@@ -48,47 +48,52 @@ var fetch = require('node-fetch');
 var nodemailer = require('nodemailer');
 var config = require("config");
 //const axios = require('axios');
-var ExtractJwt = passportJWT.ExtractJwt;
-var JwtStrategy = passportJWT.Strategy;
+//const ExtractJwt = passportJWT.ExtractJwt;
+//const JwtStrategy = passportJWT.Strategy;
 var env = process.env.NODE_ENV || "Dev";
 var jwtOptions = {};
-jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader();
+//jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeader();
 jwtOptions.secretOrKey = 'tasmanianDevil';
-var strategy = new JwtStrategy(jwtOptions, function (jwt_payload, next) {
+/*
+var strategy = new JwtStrategy(jwtOptions,  function (jwt_payload, next) {
+   
     console.log('payload received', jwt_payload);
-    var tmpData, resultObj;
+    const tmpData,resultObj;
+    
     //Log the token in database
     try {
         var parm = [];
         parm[0] = jwt_payload.authID;
-        /*
+        
         tmpData =  DBase.DB.execSP("sps_checktoken", parm);
         console.log(tmpData)
         resultObj = JSON.parse(tmpData);
         console.log(resultObj.data[0]);
         console.log(resultObj.data[0][0].validToken);
-        */
-    }
-    catch (e) {
-        console.log(e);
+        
+    } catch (e) {
+        console.log(e)
         //res.status(500).end();
     }
-    next(null, true);
-    /*
+    
     if(resultObj.data[0][0].validToken == "Y") {
          next(null, true);
     } else {
          next(null, false);
-    }*/
+    }
+    
 });
+
 function wrapMiddleware(fn) {
-    return function (req, res, next) {
-        // If promise resolves, call `next()` with no args, otherwise call `next()`
-        // with the error from the promise rejection
-        fn(req).then(function () { return next(); }, next);
+    return function(req, res, next) {
+      // If promise resolves, call `next()` with no args, otherwise call `next()`
+      // with the error from the promise rejection
+      fn(req).then(() => next(), next);
     };
-}
+  }
+
 passport.use(strategy);
+*/
 //const env = require("env.js");
 var PORT = process.env.PORT || 3003;
 var http = require('http');
@@ -209,7 +214,7 @@ function base64_decode(base64str, file) {
     fs.writeFileSync(file, bitmap);
     console.log('******** File created from base64 encoded string ********');
 }
-app.use(passport.initialize());
+//app.use(passport.initialize());
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(bodyParser.json({ limit: '50mb' }));
 app.io = io.sockets.on('connection', function (socket) {
@@ -398,7 +403,8 @@ app.get('/statusexcel', function (req, res) {
         });
     });
 });
-app.post("/toLoadSvc", passport.authenticate('jwt', { session: false }), function (req, res) {
+//passport.authenticate('jwt', { session: false })
+app.post("/toLoadSvc", function (req, res) {
     try {
         console.log(req.get('Authorization'));
         var token = req.get('Authorization');
@@ -1157,19 +1163,54 @@ app.post("/ExecSP", function (req, res, next) {
         });
     });
 });
-app.post("/ExecSPM", function (req, res) {
+app.post("/ExecSPM", function (req, res, next) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_19, output;
+        var result, refreshedToken, token, originalDecoded, retVal, output, output, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_19, output;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    refreshedToken = null;
+                    //console.log("execSp")
+                    //console.log(req)
+                    console.log(req.body.token);
+                    if (!req.body.token) return [3 /*break*/, 2];
+                    token = req.body.token;
+                    token = token.toString().replace("JWT ", "");
+                    originalDecoded = jwt.decode(token, { complete: true });
+                    //console.log(JSON.stringify(originalDecoded));
+                    //console.log(originalDecoded.payload.authID);
+                    //console.log( Number(originalDecoded.payload.exp))
+                    //console.log((Date.now().valueOf()/ 1000))
+                    //console.log(new Date(originalDecoded.payload.exp * 1000))
+                    if (Number(originalDecoded.payload.exp) < (Date.now().valueOf() / 1000)) {
+                        //var output = JSON.stringify({ status:400, "token": null, message:"Token expired." });
+                        return [2 /*return*/, res.status(400).json({ "message": "fail", "token": null, "result": "Token expired." })];
+                        //var output = JSON.stringify({ "message": "fail", "token": null, "result": "Token expired." });
+                        //return res.status(400).json(output);
+                    }
+                    return [4 /*yield*/, checkToken(originalDecoded.payload.authID)];
+                case 1:
+                    retVal = _a.sent();
+                    if (!retVal) {
+                        output = JSON.stringify({ "message": "fail", "token": null, "result": "Not a valid token." });
+                        return [2 /*return*/, res.status(400).json(output)];
+                    }
+                    //var output = JSON.stringify({ "message": "fail", "token": null, "result": "expired" });
+                    //res.status(200).json(output);
+                    refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);
+                    console.log(refreshedToken);
+                    return [3 /*break*/, 3];
+                case 2:
+                    output = JSON.stringify({ "message": "fail", "token": null, "result": "No token provided." });
+                    return [2 /*return*/, res.status(400).json(output)];
+                case 3:
                     spName = req.body.spName;
                     parmstr = JSON.stringify(req.body.parms);
                     parms = JSON.parse(parmstr);
                     parm = [];
-                    _a.label = 1;
-                case 1:
-                    _a.trys.push([1, 3, , 4]);
+                    _a.label = 4;
+                case 4:
+                    _a.trys.push([4, 6, , 7]);
                     keyArr = Object.keys(parms);
                     //console.log(keyArr);
                     // loop through the object, pushing values to the return array
@@ -1178,22 +1219,67 @@ app.post("/ExecSPM", function (req, res) {
                         parm[index] = parms[key];
                     });
                     return [4 /*yield*/, DBase.DB.execSP(spName, parm)];
-                case 2:
+                case 5:
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
-                    output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data });
+                    console.log(resultObj.data[0]);
+                    output = JSON.stringify({ "message": "ok", "token": refreshedToken, "result": resultObj.data });
                     res.status(200).json(output);
-                    return [3 /*break*/, 4];
-                case 3:
+                    return [3 /*break*/, 7];
+                case 6:
                     e_19 = _a.sent();
                     output = JSON.stringify({ "message": "fail", "token": null, "result": e_19.message });
-                    res.status(200).json(output);
-                    return [3 /*break*/, 4];
-                case 4: return [2 /*return*/];
+                    res.status(400).json(output);
+                    return [3 /*break*/, 7];
+                case 7: return [2 /*return*/];
             }
         });
     });
 });
+/*
+app.post("/ExecSPM", async function (req, res) {
+    var result;
+
+    let spName = req.body.spName;
+    let parmstr= JSON.stringify(req.body.parms);
+    //console.log(parmstr)
+    let parms = JSON.parse(parmstr);
+    //console.log(parms)
+    const parm = [];
+
+    try {
+
+        let keyArr = Object.keys(parms);
+        //console.log(keyArr);
+
+        // loop through the object, pushing values to the return array
+        keyArr.forEach((key,index) => {
+          //console.log(key);
+          parm[index] = parms[key];
+        });
+
+        //parm[0] =  req.body.hv_table_i;
+        //parm[1] =  req.body.hv_universal_name;
+
+        const tmpData = await DBase.DB.execSP(spName, parm);
+
+        //console.log(tmpData)
+        const resultObj = JSON.parse(tmpData);
+        //console.log(resultObj.data[0]);
+        var output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data });
+        res.status(200).json(output);
+        //console.log(resultObj.data[0][0].validToken);
+        //console.log(tmpData)
+        //console.log(tmpData.data[0].hv_auth_code)
+    } catch (e) {
+        var output = JSON.stringify({ "message": "fail", "token": null, "result": e.message });
+        res.status(200).json(output);
+        //res.status(500).end();
+    }
+   
+    //res.send(result);
+});
+*/
 var api = require('./api');
 app.use('/api', api.router);
 app.use(express.static(__dirname + '/public'));
