@@ -1107,13 +1107,13 @@ app.post("/ExecSP",   async function (req, res, next) {
 
         
         if( Number(originalDecoded.payload.exp) < (Date.now().valueOf() / 1000)) {
-            var output = JSON.stringify({ "message": "fail", "token": null, "result":"Token expired." });
+            var output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result":"Token expired." });
             return res.status(400).json(output);
         }
         
         var retVal = await checkToken(originalDecoded.payload.authID)
         if(!retVal) {
-            var output = JSON.stringify({ "message": "fail", "token": null, "result": "Not a valid token." });
+            var output = JSON.stringify({ "message": "fail", "token": null,"val": "-2", "result": "Not a valid token." });
             return res.status(400).json(output);
         }
         //var output = JSON.stringify({ "message": "fail", "token": null, "result": "expired" });
@@ -1127,7 +1127,7 @@ app.post("/ExecSP",   async function (req, res, next) {
     } else {    
         // if there is no token
         // return an error
-        var output = JSON.stringify({ "message": "fail", "token": null, "result": "No token provided." });
+        var output = JSON.stringify({ "message": "fail", "token": null,"val": "-2", "result": "No token provided." });
         return res.status(400).json(output);
     }
   
@@ -1158,13 +1158,13 @@ app.post("/ExecSP",   async function (req, res, next) {
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);
         console.log(resultObj.data[0]);
-        var output = JSON.stringify({ "message": "ok", "token": refreshedToken, "result": resultObj.data[0] });
+        var output = JSON.stringify({ "message": "ok", "token": refreshedToken, "val": "0","result": resultObj.data[0] });
         res.status(200).json(output);
         //console.log(resultObj.data[0][0].validToken);
         //console.log(tmpData)
         //console.log(tmpData.data[0].hv_auth_code)
     } catch (e) {
-        var output = JSON.stringify({ "message": "fail", "token": null, "result": e.message });
+        var output = JSON.stringify({ "message": "fail", "token": null, "val": "-1", "result": e.message });
         res.status(400).json(output);
         //res.status(500).end();
     }
