@@ -1107,10 +1107,8 @@ app.post("/ExecSP",   async function (req, res, next) {
 
         
         if( Number(originalDecoded.payload.exp) < (Date.now().valueOf() / 1000)) {
-            //var output = JSON.stringify({ status:400, "token": null, message:"Token expired." });
-            return res.status(400).json({ "message": "fail", "token": null,  "result": "Token expired." });
-            //var output = JSON.stringify({ "message": "fail", "token": null, "result": "Token expired." });
-            //return res.status(400).json(output);
+            var output = JSON.stringify({ "message": "fail", "token": null, "result":"Token expired." });
+            return res.status(400).json(output);
         }
         
         var retVal = await checkToken(originalDecoded.payload.authID)
