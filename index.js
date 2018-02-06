@@ -169,6 +169,8 @@ async function getURLs(svcName) {
 }
 
 
+
+
 // function to encode file data to base64 encoded string
 function base64_encode(file) {
     // read binary data
@@ -725,6 +727,90 @@ app.post("/checkToken", async function (req, res) {
 });
 
 
+async function getRoles(uid,lstupdts,funcId){
+
+    var result;
+    try {
+        var url = await getURLs('roles');
+        //var url = "http://localhost:3001/loginsvc";        
+        console.log(url);
+        /*
+        var parmstr = JSON.stringify(req.body);
+        console.log(parmstr)
+        //let parmstr = JSON.stringify(req.query);
+        var parms = JSON.parse(parmstr);
+
+        console.log(parms)
+        var uid;
+        var lstupdts;
+        var funcId;
+        
+        if (req.body.uid && req.body.lstupdts && req.body.funcId) {
+            uid = req.body.uid;
+            lstupdts = req.body.lstupdts;
+            funcId =  req.body.funcId;
+        }
+        
+
+        uid = parms.uid;
+        lstupdts = parms.lstupdts;
+        funcId = parms.funcId;
+        
+        //console.log(name)
+        //console.log(password)
+        */
+
+        var parmsObj = JSON.stringify({
+            uid: uid,
+            lstupdts: lstupdts,
+            funcId :funcId
+        });
+
+        //console.log(parmsObj);
+
+        const data = await fetch(url, {
+            method: 'POST',
+            body: parmsObj,
+            headers: { 'Content-Type': 'application/json' },
+            //headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+            //headers: { 'Content-Type': 'application/json',
+            //'Content-Length': parms.length    
+        })
+
+        result = await data.json();
+
+    } catch (e) {
+        console.log("in catch")
+        var output = JSON.stringify({ "message": "fail","val": "-1", "result": e.message, "roles": {} });
+        return output;
+        //res.status(400).json(output);
+        //res.status(500).end();
+    }
+
+    //console.log("out")
+    //console.log(result)
+    //console.log(JSON.parse(result));
+
+    //console.log(JSON.parse(result).message)
+    var resultObj = JSON.parse(result);
+    if (resultObj.message == "ok") {
+        var output = JSON.stringify({ "message": "ok", "val" : "0", "result" : "", "roles": resultObj.roles});
+        return output;
+        //res.status(200).json(output);
+
+    } else {
+        if(resultObj.hasAccess == "N"){
+            var output = JSON.stringify({ "message": "fail", "val": "-2", "result": resultObj.result,  "roles": {} });
+            //res.status(400).json(output);
+            return output;
+        } else {
+            var output = JSON.stringify({ "message": "fail", "val": "-1", "result": resultObj.result,  "roles": {} });
+            return output;
+            //res.status(400).json(output);
+        }
+    }
+}
+
 app.post("/loginsvc", async function (req, res) {
     var result;
 
@@ -792,12 +878,107 @@ app.post("/loginsvc", async function (req, res) {
             //res.status(500).end();
         }
 
-        var output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result, "name": JSON.parse(result).name });
+        var lstupdts = (new Date()).toLocaleDateString();
+        if(req.body.lstupdts) {
+            lstupdts = req.body.lstupdts
+        }
+        var funcId = "0";
+        var roleStr = await getRoles(name, lstupdts, funcId);
+        console.log(roleStr)
+        var roleObj = JSON.parse(roleStr);
+        var roles= {};
+        if(roleObj.message == "ok"){
+            if(roleObj.roles) {
+                roles = roleObj.roles;
+            }
+        }
+        var output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result, "name": JSON.parse(result).name, roles : roles });
         res.status(200).json(output);
 
     } else {
         var output = JSON.stringify({ "message":  JSON.parse(result).result, "result": JSON.parse(result).message });
         res.status(200).json(output);
+    }
+    //res.send(result);
+    //console.log(result);
+});
+
+
+app.post("/rolesvc", async function (req, res) {
+    var result;
+
+    try {
+        var url = await getURLs('roles');
+        //var url = "http://localhost:3001/loginsvc";        
+        console.log(url);
+
+
+        var parmstr = JSON.stringify(req.body);
+        console.log(parmstr)
+        //let parmstr = JSON.stringify(req.query);
+        var parms = JSON.parse(parmstr);
+
+        console.log(parms)
+        var uid;
+        var lstupdts;
+        var funcId;
+        /*
+        if (req.body.uid && req.body.lstupdts && req.body.funcId) {
+            uid = req.body.uid;
+            lstupdts = req.body.lstupdts;
+            funcId =  req.body.funcId;
+        }
+        */
+
+        uid = parms.uid;
+        lstupdts = parms.lstupdts;
+        funcId = parms.funcId;
+        
+        //console.log(name)
+        //console.log(password)
+
+        var parmsObj = JSON.stringify({
+            uid: uid,
+            lstupdts: lstupdts,
+            funcId :funcId
+        });
+
+        console.log(parmsObj);
+
+        const data = await fetch(url, {
+            method: 'POST',
+            body: parmsObj,
+            headers: { 'Content-Type': 'application/json' },
+            //headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+            //headers: { 'Content-Type': 'application/json',
+            //'Content-Length': parms.length    
+        })
+
+        result = await data.json();
+
+    } catch (e) {
+        var output = JSON.stringify({ "message": "fail", "token": null, "val": "-1", "result": e.message });
+        res.status(400).json(output);
+        //res.status(500).end();
+    }
+
+    console.log(result)
+    //console.log(JSON.parse(result).message)
+    var resultObj = JSON.parse(result);
+
+    if (resultObj.message == "ok") {
+
+        var output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.roles });
+        res.status(200).json(output);
+
+    } else {
+        if(resultObj.hasAccess == "N"){
+            var output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result": resultObj.result });
+            res.status(400).json(output);
+        } else {
+            var output = JSON.stringify({ "message": "fail", "token": null, "val": "-1", "result": resultObj.result });
+            res.status(400).json(output);
+        }
     }
     //res.send(result);
     console.log(result);
@@ -1206,15 +1387,13 @@ app.post("/ExecSPM",   async function (req, res, next) {
 
         
         if( Number(originalDecoded.payload.exp) < (Date.now().valueOf() / 1000)) {
-            //var output = JSON.stringify({ status:400, "token": null, message:"Token expired." });
-            return res.status(400).json({ "message": "fail", "token": null,  "result": "Token expired." });
-            //var output = JSON.stringify({ "message": "fail", "token": null, "result": "Token expired." });
-            //return res.status(400).json(output);
+            var output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result":"Token expired." });
+            return res.status(400).json(output);
         }
         
         var retVal = await checkToken(originalDecoded.payload.authID)
         if(!retVal) {
-            var output = JSON.stringify({ "message": "fail", "token": null, "result": "Not a valid token." });
+            var output = JSON.stringify({ "message": "fail", "token": null,"val": "-2", "result": "Not a valid token." });
             return res.status(400).json(output);
         }
         //var output = JSON.stringify({ "message": "fail", "token": null, "result": "expired" });
@@ -1228,7 +1407,7 @@ app.post("/ExecSPM",   async function (req, res, next) {
     } else {    
         // if there is no token
         // return an error
-        var output = JSON.stringify({ "message": "fail", "token": null, "result": "No token provided." });
+        var output = JSON.stringify({ "message": "fail", "token": null,"val": "-2", "result": "No token provided." });
         return res.status(400).json(output);
     }
   
@@ -1259,64 +1438,19 @@ app.post("/ExecSPM",   async function (req, res, next) {
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);
         console.log(resultObj.data[0]);
-        var output = JSON.stringify({ "message": "ok", "token": refreshedToken, "result": resultObj.data });
+        var output = JSON.stringify({ "message": "ok", "token": refreshedToken, "val": "0","result": resultObj.data });
         res.status(200).json(output);
         //console.log(resultObj.data[0][0].validToken);
         //console.log(tmpData)
         //console.log(tmpData.data[0].hv_auth_code)
     } catch (e) {
-        var output = JSON.stringify({ "message": "fail", "token": null, "result": e.message });
+        var output = JSON.stringify({ "message": "fail", "token": null, "val": "-1", "result": e.message });
         res.status(400).json(output);
         //res.status(500).end();
     }
    
     //res.send(result);
 });
-
-/*
-app.post("/ExecSPM", async function (req, res) {
-    var result;
-
-    let spName = req.body.spName;
-    let parmstr= JSON.stringify(req.body.parms);  
-    //console.log(parmstr) 
-    let parms = JSON.parse(parmstr);
-    //console.log(parms)
-    const parm = [];
-
-    try {
-
-        let keyArr = Object.keys(parms);
-        //console.log(keyArr);
-
-        // loop through the object, pushing values to the return array
-        keyArr.forEach((key,index) => {
-          //console.log(key);
-          parm[index] = parms[key];          
-        });
-
-        //parm[0] =  req.body.hv_table_i;
-        //parm[1] =  req.body.hv_universal_name;
-
-        const tmpData = await DBase.DB.execSP(spName, parm);
-
-        //console.log(tmpData)
-        const resultObj = JSON.parse(tmpData);
-        //console.log(resultObj.data[0]);
-        var output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data });
-        res.status(200).json(output);
-        //console.log(resultObj.data[0][0].validToken);
-        //console.log(tmpData)
-        //console.log(tmpData.data[0].hv_auth_code)
-    } catch (e) {
-        var output = JSON.stringify({ "message": "fail", "token": null, "result": e.message });
-        res.status(200).json(output);
-        //res.status(500).end();
-    }
-   
-    //res.send(result);
-});
-*/
 
 
 const api = require('./api')

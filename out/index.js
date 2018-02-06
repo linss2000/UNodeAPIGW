@@ -758,9 +758,70 @@ app.post("/checkToken", function (req, res) {
         });
     });
 });
+function getRoles(uid, lstupdts, funcId) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, url, parmsObj, data, e_10, output, resultObj, output, output, output;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 4, , 5]);
+                    return [4 /*yield*/, getURLs('roles')];
+                case 1:
+                    url = _a.sent();
+                    //var url = "http://localhost:3001/loginsvc";        
+                    console.log(url);
+                    parmsObj = JSON.stringify({
+                        uid: uid,
+                        lstupdts: lstupdts,
+                        funcId: funcId
+                    });
+                    console.log(parmsObj);
+                    return [4 /*yield*/, fetch(url, {
+                            method: 'POST',
+                            body: parmsObj,
+                            headers: { 'Content-Type': 'application/json' }
+                        })];
+                case 2:
+                    data = _a.sent();
+                    return [4 /*yield*/, data.json()];
+                case 3:
+                    result = _a.sent();
+                    return [3 /*break*/, 5];
+                case 4:
+                    e_10 = _a.sent();
+                    console.log("in catch");
+                    output = JSON.stringify({ "message": "fail", "val": "-1", "result": e_10.message, "roles": {} });
+                    return [2 /*return*/, output];
+                case 5:
+                    console.log("out");
+                    console.log(result);
+                    console.log(JSON.parse(result));
+                    resultObj = JSON.parse(result);
+                    if (resultObj.message == "ok") {
+                        output = JSON.stringify({ "message": "ok", "val": "0", "result": "", "roles": resultObj.roles });
+                        return [2 /*return*/, output];
+                        //res.status(200).json(output);
+                    }
+                    else {
+                        if (resultObj.hasAccess == "N") {
+                            output = JSON.stringify({ "message": "fail", "val": "-2", "result": resultObj.result, "roles": {} });
+                            //res.status(400).json(output);
+                            return [2 /*return*/, output];
+                        }
+                        else {
+                            output = JSON.stringify({ "message": "fail", "val": "-1", "result": resultObj.result, "roles": {} });
+                            return [2 /*return*/, output];
+                            //res.status(400).json(output);
+                        }
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
 app.post("/loginsvc", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, url, name, password, parms, data, e_10, uuidv4, authId, payload, token, parm, tmpData, e_11, output, output;
+        var result, url, name, password, parms, data, e_11, uuidv4, authId, payload, token, parm, tmpData, e_12, lstupdts, funcId, roleStr, roleObj, roles, output, output;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -792,13 +853,13 @@ app.post("/loginsvc", function (req, res) {
                     result = _a.sent();
                     return [3 /*break*/, 5];
                 case 4:
-                    e_10 = _a.sent();
+                    e_11 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 5];
                 case 5:
                     console.log(result);
                     console.log(JSON.parse(result).message);
-                    if (!(JSON.parse(result).message == 1)) return [3 /*break*/, 10];
+                    if (!(JSON.parse(result).message == 1)) return [3 /*break*/, 11];
                     uuidv4 = require('uuid/v4');
                     authId = uuidv4();
                     payload = { userId: name, role: "read", authID: authId };
@@ -816,18 +877,106 @@ app.post("/loginsvc", function (req, res) {
                     tmpData = _a.sent();
                     return [3 /*break*/, 9];
                 case 8:
-                    e_11 = _a.sent();
-                    console.log(e_11);
+                    e_12 = _a.sent();
+                    console.log(e_12);
                     return [3 /*break*/, 9];
                 case 9:
-                    output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result, "name": JSON.parse(result).name });
-                    res.status(200).json(output);
-                    return [3 /*break*/, 11];
+                    lstupdts = (new Date()).toLocaleDateString();
+                    if (req.body.lstupdts) {
+                        lstupdts = req.body.lstupdts;
+                    }
+                    funcId = "0";
+                    return [4 /*yield*/, getRoles(name, lstupdts, funcId)];
                 case 10:
+                    roleStr = _a.sent();
+                    console.log(roleStr);
+                    roleObj = JSON.parse(roleStr);
+                    roles = {};
+                    if (roleObj.message == "ok") {
+                        if (roleObj.roles) {
+                            roles = roleObj.roles;
+                        }
+                    }
+                    output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result, "name": JSON.parse(result).name, roles: roles });
+                    res.status(200).json(output);
+                    return [3 /*break*/, 12];
+                case 11:
                     output = JSON.stringify({ "message": JSON.parse(result).result, "result": JSON.parse(result).message });
                     res.status(200).json(output);
-                    _a.label = 11;
-                case 11:
+                    _a.label = 12;
+                case 12:
+                    //res.send(result);
+                    console.log(result);
+                    return [2 /*return*/];
+            }
+        });
+    });
+});
+app.post("/rolesvc", function (req, res) {
+    return __awaiter(this, void 0, void 0, function () {
+        var result, url, parmstr, parms, uid, lstupdts, funcId, parmsObj, data, e_13, output, resultObj, output, output, output;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 4, , 5]);
+                    return [4 /*yield*/, getURLs('roles')];
+                case 1:
+                    url = _a.sent();
+                    //var url = "http://localhost:3001/loginsvc";        
+                    console.log(url);
+                    parmstr = JSON.stringify(req.body);
+                    console.log(parmstr);
+                    parms = JSON.parse(parmstr);
+                    console.log(parms);
+                    /*
+                    if (req.body.uid && req.body.lstupdts && req.body.funcId) {
+                        uid = req.body.uid;
+                        lstupdts = req.body.lstupdts;
+                        funcId =  req.body.funcId;
+                    }
+                    */
+                    uid = parms.uid;
+                    lstupdts = parms.lstupdts;
+                    funcId = parms.funcId;
+                    parmsObj = JSON.stringify({
+                        uid: uid,
+                        lstupdts: lstupdts,
+                        funcId: funcId
+                    });
+                    console.log(parmsObj);
+                    return [4 /*yield*/, fetch(url, {
+                            method: 'POST',
+                            body: parmsObj,
+                            headers: { 'Content-Type': 'application/json' }
+                        })];
+                case 2:
+                    data = _a.sent();
+                    return [4 /*yield*/, data.json()];
+                case 3:
+                    result = _a.sent();
+                    return [3 /*break*/, 5];
+                case 4:
+                    e_13 = _a.sent();
+                    output = JSON.stringify({ "message": "fail", "token": null, "val": "-1", "result": e_13.message });
+                    res.status(400).json(output);
+                    return [3 /*break*/, 5];
+                case 5:
+                    console.log(result);
+                    resultObj = JSON.parse(result);
+                    if (resultObj.message == "ok") {
+                        output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.roles });
+                        res.status(200).json(output);
+                    }
+                    else {
+                        if (resultObj.hasAccess == "N") {
+                            output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result": resultObj.result });
+                            res.status(400).json(output);
+                        }
+                        else {
+                            output = JSON.stringify({ "message": "fail", "token": null, "val": "-1", "result": resultObj.result });
+                            res.status(400).json(output);
+                        }
+                    }
                     //res.send(result);
                     console.log(result);
                     return [2 /*return*/];
@@ -837,7 +986,7 @@ app.post("/loginsvc", function (req, res) {
 });
 app.post("/getTables", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_12;
+        var result, parm, tmpData, resultObj, output, e_14;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -852,8 +1001,8 @@ app.post("/getTables", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_12 = _a.sent();
-                    console.log(e_12);
+                    e_14 = _a.sent();
+                    console.log(e_14);
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -863,7 +1012,7 @@ app.post("/getTables", function (req, res) {
 });
 app.post("/GetAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_13;
+        var result, parm, tmpData, resultObj, output, e_15;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -881,7 +1030,7 @@ app.post("/GetAttribTable", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_13 = _a.sent();
+                    e_15 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -891,7 +1040,7 @@ app.post("/GetAttribTable", function (req, res) {
 });
 app.post("/delAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_14;
+        var result, parm, tmpData, resultObj, output, e_16;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -908,7 +1057,7 @@ app.post("/delAttribTable", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_14 = _a.sent();
+                    e_16 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -918,7 +1067,7 @@ app.post("/delAttribTable", function (req, res) {
 });
 app.post("/updAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_15;
+        var result, parm, tmpData, resultObj, output, e_17;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -936,7 +1085,7 @@ app.post("/updAttribTable", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_15 = _a.sent();
+                    e_17 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -946,7 +1095,7 @@ app.post("/updAttribTable", function (req, res) {
 });
 app.post("/insAttribTable", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, parm, tmpData, resultObj, output, e_16;
+        var result, parm, tmpData, resultObj, output, e_18;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -963,7 +1112,7 @@ app.post("/insAttribTable", function (req, res) {
                     res.status(200).json(output);
                     return [3 /*break*/, 3];
                 case 2:
-                    e_16 = _a.sent();
+                    e_18 = _a.sent();
                     res.status(500).end();
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -1057,7 +1206,7 @@ app.post('/ExportToExcel', function (req, res) {
 //     }
 // });
 var checkToken = function (token) { return __awaiter(_this, void 0, void 0, function () {
-    var tmpData, resultObj, parm, e_17;
+    var tmpData, resultObj, parm, e_19;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -1076,8 +1225,8 @@ var checkToken = function (token) { return __awaiter(_this, void 0, void 0, func
                 console.log(resultObj.data[0][0].validToken);
                 return [3 /*break*/, 4];
             case 3:
-                e_17 = _a.sent();
-                console.log(e_17);
+                e_19 = _a.sent();
+                console.log(e_19);
                 return [3 /*break*/, 4];
             case 4:
                 if (resultObj.data[0][0].validToken == "Y") {
@@ -1092,7 +1241,7 @@ var checkToken = function (token) { return __awaiter(_this, void 0, void 0, func
 }); };
 app.post("/ExecSP", function (req, res, next) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, refreshedToken, token, originalDecoded, retVal, output, output, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_18, output;
+        var result, refreshedToken, token, originalDecoded, output, retVal, output, output, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_20, output;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -1110,16 +1259,14 @@ app.post("/ExecSP", function (req, res, next) {
                     //console.log((Date.now().valueOf()/ 1000))
                     //console.log(new Date(originalDecoded.payload.exp * 1000))
                     if (Number(originalDecoded.payload.exp) < (Date.now().valueOf() / 1000)) {
-                        //var output = JSON.stringify({ status:400, "token": null, message:"Token expired." });
-                        return [2 /*return*/, res.status(400).json({ "message": "fail", "token": null, "result": "Token expired." })];
-                        //var output = JSON.stringify({ "message": "fail", "token": null, "result": "Token expired." });
-                        //return res.status(400).json(output);
+                        output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result": "Token expired." });
+                        return [2 /*return*/, res.status(400).json(output)];
                     }
                     return [4 /*yield*/, checkToken(originalDecoded.payload.authID)];
                 case 1:
                     retVal = _a.sent();
                     if (!retVal) {
-                        output = JSON.stringify({ "message": "fail", "token": null, "result": "Not a valid token." });
+                        output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result": "Not a valid token." });
                         return [2 /*return*/, res.status(400).json(output)];
                     }
                     //var output = JSON.stringify({ "message": "fail", "token": null, "result": "expired" });
@@ -1128,7 +1275,7 @@ app.post("/ExecSP", function (req, res, next) {
                     console.log(refreshedToken);
                     return [3 /*break*/, 3];
                 case 2:
-                    output = JSON.stringify({ "message": "fail", "token": null, "result": "No token provided." });
+                    output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result": "No token provided." });
                     return [2 /*return*/, res.status(400).json(output)];
                 case 3:
                     spName = req.body.spName;
@@ -1150,12 +1297,12 @@ app.post("/ExecSP", function (req, res, next) {
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
                     console.log(resultObj.data[0]);
-                    output = JSON.stringify({ "message": "ok", "token": refreshedToken, "result": resultObj.data[0] });
+                    output = JSON.stringify({ "message": "ok", "token": refreshedToken, "val": "0", "result": resultObj.data[0] });
                     res.status(200).json(output);
                     return [3 /*break*/, 7];
                 case 6:
-                    e_18 = _a.sent();
-                    output = JSON.stringify({ "message": "fail", "token": null, "result": e_18.message });
+                    e_20 = _a.sent();
+                    output = JSON.stringify({ "message": "fail", "token": null, "val": "-1", "result": e_20.message });
                     res.status(400).json(output);
                     return [3 /*break*/, 7];
                 case 7: return [2 /*return*/];
@@ -1165,7 +1312,7 @@ app.post("/ExecSP", function (req, res, next) {
 });
 app.post("/ExecSPM", function (req, res, next) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, refreshedToken, token, originalDecoded, retVal, output, output, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_19, output;
+        var result, refreshedToken, token, originalDecoded, output, retVal, output, output, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_21, output;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -1183,16 +1330,14 @@ app.post("/ExecSPM", function (req, res, next) {
                     //console.log((Date.now().valueOf()/ 1000))
                     //console.log(new Date(originalDecoded.payload.exp * 1000))
                     if (Number(originalDecoded.payload.exp) < (Date.now().valueOf() / 1000)) {
-                        //var output = JSON.stringify({ status:400, "token": null, message:"Token expired." });
-                        return [2 /*return*/, res.status(400).json({ "message": "fail", "token": null, "result": "Token expired." })];
-                        //var output = JSON.stringify({ "message": "fail", "token": null, "result": "Token expired." });
-                        //return res.status(400).json(output);
+                        output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result": "Token expired." });
+                        return [2 /*return*/, res.status(400).json(output)];
                     }
                     return [4 /*yield*/, checkToken(originalDecoded.payload.authID)];
                 case 1:
                     retVal = _a.sent();
                     if (!retVal) {
-                        output = JSON.stringify({ "message": "fail", "token": null, "result": "Not a valid token." });
+                        output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result": "Not a valid token." });
                         return [2 /*return*/, res.status(400).json(output)];
                     }
                     //var output = JSON.stringify({ "message": "fail", "token": null, "result": "expired" });
@@ -1201,7 +1346,7 @@ app.post("/ExecSPM", function (req, res, next) {
                     console.log(refreshedToken);
                     return [3 /*break*/, 3];
                 case 2:
-                    output = JSON.stringify({ "message": "fail", "token": null, "result": "No token provided." });
+                    output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result": "No token provided." });
                     return [2 /*return*/, res.status(400).json(output)];
                 case 3:
                     spName = req.body.spName;
@@ -1223,12 +1368,12 @@ app.post("/ExecSPM", function (req, res, next) {
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
                     console.log(resultObj.data[0]);
-                    output = JSON.stringify({ "message": "ok", "token": refreshedToken, "result": resultObj.data });
+                    output = JSON.stringify({ "message": "ok", "token": refreshedToken, "val": "0", "result": resultObj.data });
                     res.status(200).json(output);
                     return [3 /*break*/, 7];
                 case 6:
-                    e_19 = _a.sent();
-                    output = JSON.stringify({ "message": "fail", "token": null, "result": e_19.message });
+                    e_21 = _a.sent();
+                    output = JSON.stringify({ "message": "fail", "token": null, "val": "-1", "result": e_21.message });
                     res.status(400).json(output);
                     return [3 /*break*/, 7];
                 case 7: return [2 /*return*/];
@@ -1236,50 +1381,6 @@ app.post("/ExecSPM", function (req, res, next) {
         });
     });
 });
-/*
-app.post("/ExecSPM", async function (req, res) {
-    var result;
-
-    let spName = req.body.spName;
-    let parmstr= JSON.stringify(req.body.parms);
-    //console.log(parmstr)
-    let parms = JSON.parse(parmstr);
-    //console.log(parms)
-    const parm = [];
-
-    try {
-
-        let keyArr = Object.keys(parms);
-        //console.log(keyArr);
-
-        // loop through the object, pushing values to the return array
-        keyArr.forEach((key,index) => {
-          //console.log(key);
-          parm[index] = parms[key];
-        });
-
-        //parm[0] =  req.body.hv_table_i;
-        //parm[1] =  req.body.hv_universal_name;
-
-        const tmpData = await DBase.DB.execSP(spName, parm);
-
-        //console.log(tmpData)
-        const resultObj = JSON.parse(tmpData);
-        //console.log(resultObj.data[0]);
-        var output = JSON.stringify({ "message": "ok", "token": null, "result": resultObj.data });
-        res.status(200).json(output);
-        //console.log(resultObj.data[0][0].validToken);
-        //console.log(tmpData)
-        //console.log(tmpData.data[0].hv_auth_code)
-    } catch (e) {
-        var output = JSON.stringify({ "message": "fail", "token": null, "result": e.message });
-        res.status(200).json(output);
-        //res.status(500).end();
-    }
-   
-    //res.send(result);
-});
-*/
 var api = require('./api');
 app.use('/api', api.router);
 app.use(express.static(__dirname + '/public'));
