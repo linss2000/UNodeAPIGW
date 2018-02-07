@@ -760,7 +760,7 @@ app.post("/checkToken", function (req, res) {
 });
 function getRoles(uid, lstupdts, funcId) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, url, parmsObj, data, e_10, output, resultObj, output, output, output;
+        var result, url, parmsObj, data, e_10, output, resultObj, output, output, output, output;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -775,7 +775,6 @@ function getRoles(uid, lstupdts, funcId) {
                         lstupdts: lstupdts,
                         funcId: funcId
                     });
-                    console.log(parmsObj);
                     return [4 /*yield*/, fetch(url, {
                             method: 'POST',
                             body: parmsObj,
@@ -789,17 +788,20 @@ function getRoles(uid, lstupdts, funcId) {
                     return [3 /*break*/, 5];
                 case 4:
                     e_10 = _a.sent();
-                    console.log("in catch");
                     output = JSON.stringify({ "message": "fail", "val": "-1", "result": e_10.message, "roles": {} });
                     return [2 /*return*/, output];
                 case 5:
-                    console.log("out");
-                    console.log(result);
-                    console.log(JSON.parse(result));
                     resultObj = JSON.parse(result);
                     if (resultObj.message == "ok") {
-                        output = JSON.stringify({ "message": "ok", "val": "0", "result": "", "roles": resultObj.roles });
-                        return [2 /*return*/, output];
+                        if (resultObj.hasAccess == "N") {
+                            output = JSON.stringify({ "message": "fail", "val": "-2", "result": resultObj.result, "roles": {} });
+                            //res.status(400).json(output);
+                            return [2 /*return*/, output];
+                        }
+                        else {
+                            output = JSON.stringify({ "message": "ok", "val": "0", "result": "", "roles": resultObj.roles });
+                            return [2 /*return*/, output];
+                        }
                         //res.status(200).json(output);
                     }
                     else {
@@ -821,7 +823,7 @@ function getRoles(uid, lstupdts, funcId) {
 }
 app.post("/loginsvc", function (req, res) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, url, name, password, parms, data, e_11, uuidv4, authId, payload, token, parm, tmpData, e_12, lstupdts, funcId, roleStr, roleObj, roles, output, output;
+        var result, url, name, password, parms, data, e_11, uuidv4, authId, lastupdts, funcId, roleStr, roleObj, roles, lstUpdTs, payload, token, parm, tmpData, e_12, output, output;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -862,41 +864,44 @@ app.post("/loginsvc", function (req, res) {
                     if (!(JSON.parse(result).message == 1)) return [3 /*break*/, 11];
                     uuidv4 = require('uuid/v4');
                     authId = uuidv4();
-                    payload = { userId: name, role: "read", authID: authId };
+                    lastupdts = (new Date()).toLocaleDateString();
+                    if (req.body.lstupdts) {
+                        lastupdts = req.body.lstupdts;
+                    }
+                    funcId = "0";
+                    return [4 /*yield*/, getRoles(name, lastupdts, funcId)];
+                case 6:
+                    roleStr = _a.sent();
+                    roleObj = JSON.parse(roleStr);
+                    roles = {};
+                    lstUpdTs = null;
+                    if (roleObj.message == "ok") {
+                        if (roleObj.roles) {
+                            roles = roleObj.roles;
+                        }
+                        if (roleObj.lstUpdTs) {
+                            lstUpdTs = roleObj.lstUpdTs;
+                        }
+                    }
+                    payload = { userId: name, authID: authId, lstUpdTs: lstUpdTs };
                     token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '1h' });
                     console.log(token);
-                    _a.label = 6;
-                case 6:
-                    _a.trys.push([6, 8, , 9]);
+                    _a.label = 7;
+                case 7:
+                    _a.trys.push([7, 9, , 10]);
                     parm = [];
                     parm[0] = token;
                     parm[1] = name;
                     parm[2] = authId;
                     return [4 /*yield*/, DBase.DB.execSP("spi_taccesstoken", parm)];
-                case 7:
-                    tmpData = _a.sent();
-                    return [3 /*break*/, 9];
                 case 8:
+                    tmpData = _a.sent();
+                    return [3 /*break*/, 10];
+                case 9:
                     e_12 = _a.sent();
                     console.log(e_12);
-                    return [3 /*break*/, 9];
-                case 9:
-                    lstupdts = (new Date()).toLocaleDateString();
-                    if (req.body.lstupdts) {
-                        lstupdts = req.body.lstupdts;
-                    }
-                    funcId = "0";
-                    return [4 /*yield*/, getRoles(name, lstupdts, funcId)];
+                    return [3 /*break*/, 10];
                 case 10:
-                    roleStr = _a.sent();
-                    console.log(roleStr);
-                    roleObj = JSON.parse(roleStr);
-                    roles = {};
-                    if (roleObj.message == "ok") {
-                        if (roleObj.roles) {
-                            roles = roleObj.roles;
-                        }
-                    }
                     output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result, "name": JSON.parse(result).name, roles: roles });
                     res.status(200).json(output);
                     return [3 /*break*/, 12];
@@ -904,10 +909,7 @@ app.post("/loginsvc", function (req, res) {
                     output = JSON.stringify({ "message": JSON.parse(result).result, "result": JSON.parse(result).message });
                     res.status(200).json(output);
                     _a.label = 12;
-                case 12:
-                    //res.send(result);
-                    console.log(result);
-                    return [2 /*return*/];
+                case 12: return [2 /*return*/];
             }
         });
     });
@@ -1241,15 +1243,16 @@ var checkToken = function (token) { return __awaiter(_this, void 0, void 0, func
 }); };
 app.post("/ExecSP", function (req, res, next) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, refreshedToken, token, originalDecoded, output, retVal, output, output, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_20, output;
+        var result, refreshedToken, roles, lstUpdTs, funcId, token, originalDecoded, output, retVal, output, roleStr, roleObj, output, output, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_20, output;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     refreshedToken = null;
+                    roles = {};
                     //console.log("execSp")
                     //console.log(req)
                     console.log(req.body.token);
-                    if (!req.body.token) return [3 /*break*/, 2];
+                    if (!req.body.token) return [3 /*break*/, 3];
                     token = req.body.token;
                     token = token.toString().replace("JWT ", "");
                     originalDecoded = jwt.decode(token, { complete: true });
@@ -1271,20 +1274,58 @@ app.post("/ExecSP", function (req, res, next) {
                     }
                     //var output = JSON.stringify({ "message": "fail", "token": null, "result": "expired" });
                     //res.status(200).json(output);
+                    /*
+                    lstUpdTs = (new Date()).toLocaleDateString();
+                    if(req.body.lstUpdTs) {
+                        lstUpdTs = req.body.lstUpdTs
+                    }
+                    */
                     refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);
-                    console.log(refreshedToken);
-                    return [3 /*break*/, 3];
+                    if (originalDecoded.payload.lstUpdTs) {
+                        lstUpdTs = originalDecoded.payload.lstUpdTs;
+                    }
+                    else {
+                        lstUpdTs = (new Date()).toLocaleDateString();
+                    }
+                    funcId = "0";
+                    if (req.body.funcId) {
+                        funcId = req.body.funcId;
+                    }
+                    return [4 /*yield*/, getRoles(originalDecoded.payload.userId, lstUpdTs, funcId)];
                 case 2:
+                    roleStr = _a.sent();
+                    console.log(roleStr);
+                    roleObj = JSON.parse(roleStr);
+                    if (roleObj.message == "ok") {
+                        if (roleObj.roles) {
+                            roles = roleObj.roles;
+                            lstUpdTs = roleObj.lstUpdTs;
+                            originalDecoded.payload.lstUpdTs = lstUpdTs;
+                            refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);
+                        }
+                    }
+                    else {
+                        if (roleObj.val == "-2") {
+                            output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result": roleObj.result });
+                            return [2 /*return*/, res.status(400).json(output)];
+                        }
+                        else {
+                            output = JSON.stringify({ "message": "fail", "token": refreshedToken, "val": roleObj.val, "result": roleObj.result });
+                            return [2 /*return*/, res.status(400).json(output)];
+                        }
+                    }
+                    return [3 /*break*/, 4];
+                case 3:
                     output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result": "No token provided." });
                     return [2 /*return*/, res.status(400).json(output)];
-                case 3:
+                case 4:
                     spName = req.body.spName;
                     parmstr = JSON.stringify(req.body.parms);
                     parms = JSON.parse(parmstr);
                     parm = [];
-                    _a.label = 4;
-                case 4:
-                    _a.trys.push([4, 6, , 7]);
+                    _a.label = 5;
+                case 5:
+                    _a.trys.push([5, 7, , 8]);
                     keyArr = Object.keys(parms);
                     //console.log(keyArr);
                     // loop through the object, pushing values to the return array
@@ -1293,34 +1334,35 @@ app.post("/ExecSP", function (req, res, next) {
                         parm[index] = parms[key];
                     });
                     return [4 /*yield*/, DBase.DB.execSP(spName, parm)];
-                case 5:
+                case 6:
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
                     console.log(resultObj.data[0]);
-                    output = JSON.stringify({ "message": "ok", "token": refreshedToken, "val": "0", "result": resultObj.data[0] });
+                    output = JSON.stringify({ "message": "ok", "token": refreshedToken, "val": "0", "result": resultObj.data[0], roles: roles });
                     res.status(200).json(output);
-                    return [3 /*break*/, 7];
-                case 6:
+                    return [3 /*break*/, 8];
+                case 7:
                     e_20 = _a.sent();
                     output = JSON.stringify({ "message": "fail", "token": null, "val": "-1", "result": e_20.message });
                     res.status(400).json(output);
-                    return [3 /*break*/, 7];
-                case 7: return [2 /*return*/];
+                    return [3 /*break*/, 8];
+                case 8: return [2 /*return*/];
             }
         });
     });
 });
 app.post("/ExecSPM", function (req, res, next) {
     return __awaiter(this, void 0, void 0, function () {
-        var result, refreshedToken, token, originalDecoded, output, retVal, output, output, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_21, output;
+        var result, refreshedToken, roles, lstUpdTs, funcId, token, originalDecoded, output, retVal, output, roleStr, roleObj, output, output, spName, parmstr, parms, parm, keyArr, tmpData, resultObj, output, e_21, output;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     refreshedToken = null;
+                    roles = {};
                     //console.log("execSp")
                     //console.log(req)
                     console.log(req.body.token);
-                    if (!req.body.token) return [3 /*break*/, 2];
+                    if (!req.body.token) return [3 /*break*/, 3];
                     token = req.body.token;
                     token = token.toString().replace("JWT ", "");
                     originalDecoded = jwt.decode(token, { complete: true });
@@ -1342,20 +1384,58 @@ app.post("/ExecSPM", function (req, res, next) {
                     }
                     //var output = JSON.stringify({ "message": "fail", "token": null, "result": "expired" });
                     //res.status(200).json(output);
+                    /*
+                    lstUpdTs = (new Date()).toLocaleDateString();
+                    if(req.body.lstUpdTs) {
+                        lstUpdTs = req.body.lstUpdTs
+                    }
+                    */
                     refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);
-                    console.log(refreshedToken);
-                    return [3 /*break*/, 3];
+                    if (originalDecoded.payload.lstUpdTs) {
+                        lstUpdTs = originalDecoded.payload.lstUpdTs;
+                    }
+                    else {
+                        lstUpdTs = (new Date()).toLocaleDateString();
+                    }
+                    funcId = "0";
+                    if (req.body.funcId) {
+                        funcId = req.body.funcId;
+                    }
+                    return [4 /*yield*/, getRoles(originalDecoded.payload.userId, lstUpdTs, funcId)];
                 case 2:
+                    roleStr = _a.sent();
+                    console.log(roleStr);
+                    roleObj = JSON.parse(roleStr);
+                    if (roleObj.message == "ok") {
+                        if (roleObj.roles) {
+                            roles = roleObj.roles;
+                            lstUpdTs = roleObj.lstUpdTs;
+                            originalDecoded.payload.lstUpdTs = lstUpdTs;
+                            refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);
+                        }
+                    }
+                    else {
+                        if (roleObj.val == "-2") {
+                            output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result": roleObj.result });
+                            return [2 /*return*/, res.status(400).json(output)];
+                        }
+                        else {
+                            output = JSON.stringify({ "message": "fail", "token": refreshedToken, "val": roleObj.val, "result": roleObj.result });
+                            return [2 /*return*/, res.status(400).json(output)];
+                        }
+                    }
+                    return [3 /*break*/, 4];
+                case 3:
                     output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result": "No token provided." });
                     return [2 /*return*/, res.status(400).json(output)];
-                case 3:
+                case 4:
                     spName = req.body.spName;
                     parmstr = JSON.stringify(req.body.parms);
                     parms = JSON.parse(parmstr);
                     parm = [];
-                    _a.label = 4;
-                case 4:
-                    _a.trys.push([4, 6, , 7]);
+                    _a.label = 5;
+                case 5:
+                    _a.trys.push([5, 7, , 8]);
                     keyArr = Object.keys(parms);
                     //console.log(keyArr);
                     // loop through the object, pushing values to the return array
@@ -1364,19 +1444,19 @@ app.post("/ExecSPM", function (req, res, next) {
                         parm[index] = parms[key];
                     });
                     return [4 /*yield*/, DBase.DB.execSP(spName, parm)];
-                case 5:
+                case 6:
                     tmpData = _a.sent();
                     resultObj = JSON.parse(tmpData);
                     console.log(resultObj.data[0]);
-                    output = JSON.stringify({ "message": "ok", "token": refreshedToken, "val": "0", "result": resultObj.data });
+                    output = JSON.stringify({ "message": "ok", "token": refreshedToken, "val": "0", "result": resultObj.data, roles: roles });
                     res.status(200).json(output);
-                    return [3 /*break*/, 7];
-                case 6:
+                    return [3 /*break*/, 8];
+                case 7:
                     e_21 = _a.sent();
                     output = JSON.stringify({ "message": "fail", "token": null, "val": "-1", "result": e_21.message });
                     res.status(400).json(output);
-                    return [3 /*break*/, 7];
-                case 7: return [2 /*return*/];
+                    return [3 /*break*/, 8];
+                case 8: return [2 /*return*/];
             }
         });
     });

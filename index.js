@@ -780,7 +780,7 @@ async function getRoles(uid,lstupdts,funcId){
         result = await data.json();
 
     } catch (e) {
-        console.log("in catch")
+        //console.log("in catch")
         var output = JSON.stringify({ "message": "fail","val": "-1", "result": e.message, "roles": {} });
         return output;
         //res.status(400).json(output);
@@ -794,10 +794,15 @@ async function getRoles(uid,lstupdts,funcId){
     //console.log(JSON.parse(result).message)
     var resultObj = JSON.parse(result);
     if (resultObj.message == "ok") {
-        var output = JSON.stringify({ "message": "ok", "val" : "0", "result" : "", "roles": resultObj.roles});
-        return output;
+        if(resultObj.hasAccess == "N"){
+            var output = JSON.stringify({ "message": "fail", "val": "-2", "result": resultObj.result,  "roles": {} });
+            //res.status(400).json(output);
+            return output;
+        } else {
+            var output = JSON.stringify({ "message": "ok", "val" : "0", "result" : "", "roles": resultObj.roles});
+            return output;
+        }
         //res.status(200).json(output);
-
     } else {
         if(resultObj.hasAccess == "N"){
             var output = JSON.stringify({ "message": "fail", "val": "-2", "result": resultObj.result,  "roles": {} });
@@ -858,7 +863,27 @@ app.post("/loginsvc", async function (req, res) {
         const uuidv4 = require('uuid/v4');
         const authId = uuidv4(); // ⇨ 'df7cca36-3d7a-40f4-8f06-ae03cc22f045'
 
-        var payload = { userId: name, role: "read", authID: authId };
+        var lastupdts = (new Date()).toLocaleDateString();
+        if(req.body.lstupdts) {
+            lastupdts = req.body.lstupdts
+        }
+        var funcId = "0";
+        var roleStr = await getRoles(name, lastupdts, funcId);
+        //console.log(roleStr)
+    
+        var roleObj = JSON.parse(roleStr);
+        var roles= {};
+        var lstUpdTs = null;
+        if(roleObj.message == "ok"){
+            if(roleObj.roles) {
+                roles = roleObj.roles;
+            }
+            if(roleObj.lstUpdTs) {
+                lstUpdTs = roleObj.lstUpdTs;
+            }
+        }
+
+        var payload = { userId: name, authID: authId, lstUpdTs: lstUpdTs };
         var token = jwt.sign(payload, jwtOptions.secretOrKey, { expiresIn: '1h' }); // '1h'
         console.log(token)
 
@@ -878,20 +903,7 @@ app.post("/loginsvc", async function (req, res) {
             //res.status(500).end();
         }
 
-        var lstupdts = (new Date()).toLocaleDateString();
-        if(req.body.lstupdts) {
-            lstupdts = req.body.lstupdts
-        }
-        var funcId = "0";
-        var roleStr = await getRoles(name, lstupdts, funcId);
-        console.log(roleStr)
-        var roleObj = JSON.parse(roleStr);
-        var roles= {};
-        if(roleObj.message == "ok"){
-            if(roleObj.roles) {
-                roles = roleObj.roles;
-            }
-        }
+       
         var output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result, "name": JSON.parse(result).name, roles : roles });
         res.status(200).json(output);
 
@@ -1258,6 +1270,9 @@ const checkToken = async (token) => {
 app.post("/ExecSP",   async function (req, res, next) {
     var result;
     var refreshedToken = null;
+    var roles= {};
+    var lstUpdTs;
+    var funcId;
     //console.log("execSp")
     //console.log(req)
     console.log(req.body.token)
@@ -1297,11 +1312,49 @@ app.post("/ExecSP",   async function (req, res, next) {
             var output = JSON.stringify({ "message": "fail", "token": null,"val": "-2", "result": "Not a valid token." });
             return res.status(400).json(output);
         }
+        
         //var output = JSON.stringify({ "message": "fail", "token": null, "result": "expired" });
         //res.status(200).json(output);
-
+        /*
+        lstUpdTs = (new Date()).toLocaleDateString();
+        if(req.body.lstUpdTs) {
+            lstUpdTs = req.body.lstUpdTs
+        }
+        */
         refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);
-        console.log(refreshedToken)
+
+        if(originalDecoded.payload.lstUpdTs) {
+            lstUpdTs = originalDecoded.payload.lstUpdTs;
+        } else {
+            lstUpdTs = (new Date()).toLocaleDateString();
+        }
+
+        funcId = "0";
+        if(req.body.funcId) {
+            funcId = req.body.funcId
+        }
+
+        var roleStr = await getRoles(originalDecoded.payload.userId, lstUpdTs, funcId);
+        console.log(roleStr)
+        var roleObj = JSON.parse(roleStr);       
+        if(roleObj.message == "ok"){
+            if(roleObj.roles) {
+                roles = roleObj.roles;
+                lstUpdTs = roleObj.lstUpdTs;
+                originalDecoded.payload.lstUpdTs = lstUpdTs;
+                refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);            
+            }
+        } else {
+            var output;
+            if(roleObj.val == "-2"){
+                output = JSON.stringify({ "message": "fail", "token": null,"val": "-2", "result": roleObj.result});
+                return res.status(400).json(output);
+            } else {
+                output = JSON.stringify({ "message": "fail", "token": refreshedToken,"val": roleObj.val, "result": roleObj.result});
+                return res.status(400).json(output);
+            }
+        }        
+        //console.log(refreshedToken)
         // new 'exp' value is later in the future. 
         //console.log(JSON.stringify(jwt.decode(refreshed, { complete: true })));           
         
@@ -1324,7 +1377,6 @@ app.post("/ExecSP",   async function (req, res, next) {
 
         let keyArr = Object.keys(parms);
         //console.log(keyArr);
-
         // loop through the object, pushing values to the return array
         keyArr.forEach((key,index) => {
           //console.log(key);
@@ -1339,7 +1391,7 @@ app.post("/ExecSP",   async function (req, res, next) {
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);
         console.log(resultObj.data[0]);
-        var output = JSON.stringify({ "message": "ok", "token": refreshedToken, "val": "0","result": resultObj.data[0] });
+        var output = JSON.stringify({ "message": "ok", "token": refreshedToken, "val": "0","result": resultObj.data[0], roles: roles });
         res.status(200).json(output);
         //console.log(resultObj.data[0][0].validToken);
         //console.log(tmpData)
@@ -1352,11 +1404,13 @@ app.post("/ExecSP",   async function (req, res, next) {
    
     //res.send(result);
 });
-
 
 app.post("/ExecSPM",   async function (req, res, next) {
     var result;
     var refreshedToken = null;
+    var roles= {};
+    var lstUpdTs;
+    var funcId;
     //console.log("execSp")
     //console.log(req)
     console.log(req.body.token)
@@ -1396,11 +1450,49 @@ app.post("/ExecSPM",   async function (req, res, next) {
             var output = JSON.stringify({ "message": "fail", "token": null,"val": "-2", "result": "Not a valid token." });
             return res.status(400).json(output);
         }
+        
         //var output = JSON.stringify({ "message": "fail", "token": null, "result": "expired" });
         //res.status(200).json(output);
-
+        /*
+        lstUpdTs = (new Date()).toLocaleDateString();
+        if(req.body.lstUpdTs) {
+            lstUpdTs = req.body.lstUpdTs
+        }
+        */
         refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);
-        console.log(refreshedToken)
+
+        if(originalDecoded.payload.lstUpdTs) {
+            lstUpdTs = originalDecoded.payload.lstUpdTs;
+        } else {
+            lstUpdTs = (new Date()).toLocaleDateString();
+        }
+
+        funcId = "0";
+        if(req.body.funcId) {
+            funcId = req.body.funcId
+        }
+
+        var roleStr = await getRoles(originalDecoded.payload.userId, lstUpdTs, funcId);
+        console.log(roleStr)
+        var roleObj = JSON.parse(roleStr);       
+        if(roleObj.message == "ok"){
+            if(roleObj.roles) {
+                roles = roleObj.roles;
+                lstUpdTs = roleObj.lstUpdTs;
+                originalDecoded.payload.lstUpdTs = lstUpdTs;
+                refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);            
+            }
+        } else {
+            var output;
+            if(roleObj.val == "-2"){
+                output = JSON.stringify({ "message": "fail", "token": null,"val": "-2", "result": roleObj.result});
+                return res.status(400).json(output);
+            } else {
+                output = JSON.stringify({ "message": "fail", "token": refreshedToken,"val": roleObj.val, "result": roleObj.result});
+                return res.status(400).json(output);
+            }
+        }        
+        //console.log(refreshedToken)
         // new 'exp' value is later in the future. 
         //console.log(JSON.stringify(jwt.decode(refreshed, { complete: true })));           
         
@@ -1423,7 +1515,6 @@ app.post("/ExecSPM",   async function (req, res, next) {
 
         let keyArr = Object.keys(parms);
         //console.log(keyArr);
-
         // loop through the object, pushing values to the return array
         keyArr.forEach((key,index) => {
           //console.log(key);
@@ -1438,7 +1529,7 @@ app.post("/ExecSPM",   async function (req, res, next) {
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);
         console.log(resultObj.data[0]);
-        var output = JSON.stringify({ "message": "ok", "token": refreshedToken, "val": "0","result": resultObj.data });
+        var output = JSON.stringify({ "message": "ok", "token": refreshedToken, "val": "0","result": resultObj.data, roles: roles });
         res.status(200).json(output);
         //console.log(resultObj.data[0][0].validToken);
         //console.log(tmpData)
@@ -1451,6 +1542,7 @@ app.post("/ExecSPM",   async function (req, res, next) {
    
     //res.send(result);
 });
+
 
 
 const api = require('./api')
