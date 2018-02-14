@@ -69,7 +69,7 @@ passport.use(strategy);
 */
 
 //const env = require("env.js");
-const PORT = process.env.PORT || 3003;
+const PORT = process.env.PORT || 4003;
 const http = require('http');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -437,7 +437,7 @@ app.post("/sendEmail", async function (req, res) {
         var htm = "<div>Hi " + resultObj.data[0][0].hv_first_name + ",<br/><br/> We have received a request to reset your password. <br/> If you did not make this request, just ignore this message.";
         htm += "Otherwise, you can reset your password using this link<br/><br/>"
         //htm += "<a href=\'http://localhost:3000/changepwd/" + resultObj.data[0][0].hv_pwd_token + "\'> Click here to reset your password</a><br/>"
-        htm += "<a href=\'http://hvs.selfip.net:3000/changepwd/" + resultObj.data[0][0].hv_pwd_token + "\'> Click here to reset your password</a><br/>"
+        htm += "<a href=\'http://hvs.selfip.net:4000/changepwd/" + resultObj.data[0][0].hv_pwd_token + "\'> Click here to reset your password</a><br/>"
         htm += "<br/>Thanks,<br/> The HVS Cadet Team"
 
         console.log(htm)

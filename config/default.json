@@ -2,7 +2,7 @@
     "Dev": {
         "dbConfig": {
             "server": "hvs.selfip.net",
-            "database": "HVS",
+            "database": "Universe",
             "user": "hvssql",
             "password": "hvssql",                              
             "requestTimeout": 60000,
