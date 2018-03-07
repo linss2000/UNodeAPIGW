@@ -904,7 +904,7 @@ app.post("/loginsvc", async function (req, res) {
         }
 
        
-        var output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result, "name": JSON.parse(result).name, roles : roles });
+        var output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result, "name": JSON.parse(result).name, "hv_staff_id": JSON.parse(result).hv_staff_id, roles : roles });
         res.status(200).json(output);
 
     } else {
