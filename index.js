@@ -29,32 +29,32 @@ jwtOptions.secretOrKey = 'tasmanianDevil';
 
 /*
 var strategy = new JwtStrategy(jwtOptions,  function (jwt_payload, next) {
-   
+
     console.log('payload received', jwt_payload);
     const tmpData,resultObj;
-    
+
     //Log the token in database
     try {
-        var parm = [];        
+        var parm = [];
         parm[0] = jwt_payload.authID;
-        
+
         tmpData =  DBase.DB.execSP("sps_checktoken", parm);
         console.log(tmpData)
         resultObj = JSON.parse(tmpData);
         console.log(resultObj.data[0]);
         console.log(resultObj.data[0][0].validToken);
-        
+
     } catch (e) {
         console.log(e)
         //res.status(500).end();
     }
-    
+
     if(resultObj.data[0][0].validToken == "Y") {
          next(null, true);
     } else {
          next(null, false);
     }
-    
+
 });
 
 function wrapMiddleware(fn) {
@@ -107,7 +107,7 @@ app.use('*', async function (req, res, next) {
     console.log(JSON.stringify(originalDecoded));
 
     var refreshed = jwt.refresh(originalDecoded, 300, jwtOptions.secretOrKey);
-    // new 'exp' value is later in the future. 
+    // new 'exp' value is later in the future.
     console.log(JSON.stringify(jwt.decode(refreshed, { complete: true })));
 
     // check header or url parameters or post parameters for token
@@ -117,24 +117,24 @@ app.use('*', async function (req, res, next) {
     // decode token
     if (token) {
         // verifies secret and checks exp
-        jwt.verify(token,jwtOptions.secretOrKey, function(err, decoded) {      
+        jwt.verify(token,jwtOptions.secretOrKey, function(err, decoded) {
         if (err) {
-            return res.json({ success: false, message: 'Failed to authenticate token.' });    
+            return res.json({ success: false, message: 'Failed to authenticate token.' });
         } else {
             // if everything is good, save to request for use in other routes
-            req.decoded = decoded;    
+            req.decoded = decoded;
             next();
         }
         });
-    
-    } else {    
+
+    } else {
         // if there is no token
         // return an error
-        return res.status(403).send({ 
-            success: false, 
-            message: 'No token provided.' 
+        return res.status(403).send({
+            success: false,
+            message: 'No token provided.'
         });
-    
+
     }
     */
     //console.log(await getURLs('db'));
@@ -152,7 +152,7 @@ DBase.DB.on('error', function (err) {
 
 async function getURLs(svcName) {
     try {
-        var result = await DBase.DB.execSQl("select gs_name, gs_url from tAPIURL")
+        var result = await DBase.DB.execSQl("select gs_name, gs_url from tAPIURL where env = '" + process.env.NODE_ENV + "'");
         var resultObj = JSON.parse(result);
         console.log(resultObj.data[0]);
 
@@ -164,7 +164,7 @@ async function getURLs(svcName) {
         return results[0].gs_url;
     } catch (err) {
         return err;
-        //response.send(err); 
+        //response.send(err);
     }
 }
 
@@ -234,9 +234,9 @@ console.log(conf.cols)
         //console.log(resultObj.data[0]);
         console.log(Date.now())
         if (resultObj.data[0].length > 0) {
-            
+
             arr=[];
-            for(var i=0;i<resultObj.data[0].length;i++){                
+            for(var i=0;i<resultObj.data[0].length;i++){
                 var a=[
                     resultObj.data[0][i].gs_id,
                     resultObj.data[0][i].gs_user_i,
@@ -250,7 +250,7 @@ console.log(conf.cols)
                 arr.push(a);
                 }
                 conf.rows=arr;
-               
+
                 //conf.rows= resultObj.data[0];
     var result=nodeExcel.execute(conf);
     console.log(Date.now())
@@ -267,7 +267,7 @@ app.get('/excel',async function (req, res) {
     const nodeExcel=require('excel-export');
     const dateFormat = require('dateformat');
     var conf={}
-   
+
     var arr=[];
 
     conf.cols=[{
@@ -311,7 +311,7 @@ app.get('/excel',async function (req, res) {
             width:150
         }
         ];
-  
+
         const parm = [];
        console.log("Before SQL")
        console.log(Date.now())
@@ -322,9 +322,9 @@ app.get('/excel',async function (req, res) {
         //console.log(resultObj.data[0]);
         console.log(Date.now())
         if (resultObj.data[0].length > 0) {
-            
+
             arr=[];
-            for(var i=0;i<resultObj.data[0].length;i++){                
+            for(var i=0;i<resultObj.data[0].length;i++){
                 var a=[
                     resultObj.data[0][i].gs_id,
                     resultObj.data[0][i].gs_user_i,
@@ -338,7 +338,7 @@ app.get('/excel',async function (req, res) {
                 arr.push(a);
                 }
                 conf.rows=arr;
-               
+
                 //conf.rows= resultObj.data[0];
     var result=nodeExcel.execute(conf);
     console.log(Date.now())
@@ -350,17 +350,17 @@ app.get('/excel',async function (req, res) {
     }
 });
 
-app.get('/cadetexcel',async function (req, res) {    
+app.get('/cadetexcel',async function (req, res) {
     var file = __dirname + '/public/CadetListDownloadExcel.xlsx';
     res.download(file); // Set disposition and send it.
 });
-   
-app.get('/budgetexcel',async function (req, res) {    
+
+app.get('/budgetexcel',async function (req, res) {
     var file = __dirname + '/public/budget.xlsx';
     res.download(file); // Set disposition and send it.
 });
 
-app.get('/statusexcel',async function (req, res) {    
+app.get('/statusexcel',async function (req, res) {
     var file = __dirname + '/public/StatusOfCadetApplications.xlsx';
     res.download(file); // Set disposition and send it.
 });
@@ -377,7 +377,7 @@ app.post("/toLoadSvc",  function (req, res) {
         console.log(JSON.stringify(originalDecoded));
 
         var refreshed = jwt.refresh(originalDecoded, 300, jwtOptions.secretOrKey);
-        // new 'exp' value is later in the future. 
+        // new 'exp' value is later in the future.
         console.log(JSON.stringify(jwt.decode(refreshed, { complete: true })));
         var output = JSON.stringify({ "message": "token refreshed", "token": refreshed, "result": 0 });
         res.status(200).json(output);
@@ -403,8 +403,8 @@ app.post("/sendEmail", async function (req, res) {
         const resultObj = JSON.parse(tmpData);
         console.log(resultObj.data[0]);
         if (resultObj.data[0].length > 0) {
-        
-           
+
+
         /*
         var transporter = nodemailer.createTransport({
             host: 'server54.web-hosting.com',
@@ -415,7 +415,7 @@ app.post("/sendEmail", async function (req, res) {
             pass: 'Mini8536!'
             }
         });
-  
+
         var mailOptions = {
             from: 'venugopal.kolli@hudsonvalleysystems.com',
             to: 'kollive@gmail.com',
@@ -432,7 +432,7 @@ app.post("/sendEmail", async function (req, res) {
             pass: 'HudsonCadet!'
             }
         });
-  
+
         //console.log( resultObj.data[0][0].hv_pwd_token )
         var htm = "<div>Hi " + resultObj.data[0][0].hv_first_name + ",<br/><br/> We have received a request to reset your password. <br/> If you did not make this request, just ignore this message.";
         htm += "Otherwise, you can reset your password using this link<br/><br/>"
@@ -445,7 +445,7 @@ app.post("/sendEmail", async function (req, res) {
             from: 'HVSCadet@gmail.com',
             to: 'kollive@hotmail.com;' + req.body.hv_email,
             subject: 'Reset your Password',
-            html: htm,          
+            html: htm,
         };
 
         transporter.sendMail(mailOptions, function(error, info){
@@ -468,7 +468,7 @@ app.post("/sendEmail", async function (req, res) {
     } catch (e) {
         res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
@@ -476,17 +476,17 @@ app.post("/getCadets", async function (req, res) {
     var result;
     try {
 
-     
+
         const parm = [];
         parm[0] =  req.body.name;
-       
+
         const tmpData = await new DBase.DB.execSP("sps_getcadets", parm);
 
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);
         //console.log(resultObj.data[0]);
         if (resultObj.data[0].length > 0) {
-                   
+
         var output = JSON.stringify({ "token": null, "result": {items: resultObj.data[0], msg: ""} });
         res.status(200).json(output);
         }else {
@@ -500,24 +500,24 @@ app.post("/getCadets", async function (req, res) {
         console.log(e)
         res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
 app.post("/getMentors", async function (req, res) {
     var result;
     try {
-        
+
         const parm = [];
         parm[0] =  req.body.name;
-       
+
         const tmpData = await new DBase.DB.execSP("sps_getMentors", parm);
 
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);
         //console.log(resultObj.data[0]);
         if (resultObj.data[0].length > 0) {
-                   
+
         var output = JSON.stringify({ "token": null, "result": {items: resultObj.data[0], msg: ""} });
         res.status(200).json(output);
         }else {
@@ -531,24 +531,24 @@ app.post("/getMentors", async function (req, res) {
         console.log(e)
         res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
 app.post("/getBudgets", async function (req, res) {
     var result;
     try {
-        
+
         const parm = [];
         parm[0] =  req.body.name;
-       
+
         const tmpData = await new DBase.DB.execSP("sps_getBudgets", parm);
 
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);
         //console.log(resultObj.data[0]);
         if (resultObj.data[0].length > 0) {
-                   
+
         var output = JSON.stringify({ "token": null, "result": {items: resultObj.data[0], msg: ""} });
         res.status(200).json(output);
         }else {
@@ -562,24 +562,24 @@ app.post("/getBudgets", async function (req, res) {
         console.log(e)
         res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
 app.post("/getPurchases", async function (req, res) {
     var result;
     try {
-        
+
         const parm = [];
         parm[0] =  req.body.name;
-       
+
         const tmpData = await new DBase.DB.execSP("sps_getPurchases", parm);
 
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);
         //console.log(resultObj.data[0]);
         if (resultObj.data[0].length > 0) {
-                   
+
         var output = JSON.stringify({ "token": null, "result": {items: resultObj.data[0], msg: ""} });
         res.status(200).json(output);
         }else {
@@ -593,24 +593,24 @@ app.post("/getPurchases", async function (req, res) {
         console.log(e)
         res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
 app.post("/getApprovals", async function (req, res) {
     var result;
     try {
-        
+
         const parm = [];
         parm[0] =  req.body.name;
-       
+
         const tmpData = await new DBase.DB.execSP("sps_getApprovals", parm);
 
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);
         //console.log(resultObj.data[0]);
         if (resultObj.data[0].length > 0) {
-                   
+
         var output = JSON.stringify({ "token": null, "result": {items: resultObj.data[0], msg: ""} });
         res.status(200).json(output);
         }else {
@@ -624,24 +624,24 @@ app.post("/getApprovals", async function (req, res) {
         console.log(e)
         res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
 app.post("/getSchedules", async function (req, res) {
     var result;
     try {
-        
+
         const parm = [];
         parm[0] =  req.body.name;
-       
+
         const tmpData = await new DBase.DB.execSP("sps_getSchedules", parm);
 
         //console.log(tmpData)
         const resultObj = JSON.parse(tmpData);
         //console.log(resultObj.data[0]);
         if (resultObj.data[0].length > 0) {
-                   
+
         var output = JSON.stringify({ "token": null, "result": {items: resultObj.data[0], msg: ""} });
         res.status(200).json(output);
         }else {
@@ -655,7 +655,7 @@ app.post("/getSchedules", async function (req, res) {
         console.log(e)
         res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 app.post("/changePWD", async function (req, res) {
@@ -676,7 +676,7 @@ app.post("/changePWD", async function (req, res) {
         const resultObj = JSON.parse(tmpData);
         console.log(resultObj.data[0]);
         if (resultObj.data[0].length > 0) {
-                   
+
         var output = JSON.stringify({ "message": "ok", "token": null, "result": {val: resultObj.data[0][0].hv_return, msg: resultObj.data[0][0].hv_msg} });
         res.status(200).json(output);
     }else {
@@ -689,7 +689,7 @@ app.post("/changePWD", async function (req, res) {
     } catch (e) {
         res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
@@ -701,7 +701,7 @@ app.post("/checkToken", async function (req, res) {
         console.log(req.body.newPWD)
         const parm = [];
         parm[0] =  req.body.secToken;
-       
+
 
         const tmpData = await DBase.DB.execSP("sps_checkPWDToken", parm);
 
@@ -709,7 +709,7 @@ app.post("/checkToken", async function (req, res) {
         const resultObj = JSON.parse(tmpData);
         console.log(resultObj.data[0]);
         if (resultObj.data[0].length > 0) {
-                   
+
         var output = JSON.stringify({ "message": "ok", "token": null, "result": {hv_user_id: resultObj.data[0][0].hv_user_id, msg: "", val: 1} });
         res.status(200).json(output);
     }else {
@@ -722,7 +722,7 @@ app.post("/checkToken", async function (req, res) {
     } catch (e) {
         res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
@@ -732,7 +732,7 @@ async function getRoles(uid,lstupdts,funcId){
     var result;
     try {
         var url = await getURLs('roles');
-        //var url = "http://localhost:3001/loginsvc";        
+        //var url = "http://localhost:3001/loginsvc";
         console.log(url);
         /*
         var parmstr = JSON.stringify(req.body);
@@ -744,18 +744,18 @@ async function getRoles(uid,lstupdts,funcId){
         var uid;
         var lstupdts;
         var funcId;
-        
+
         if (req.body.uid && req.body.lstupdts && req.body.funcId) {
             uid = req.body.uid;
             lstupdts = req.body.lstupdts;
             funcId =  req.body.funcId;
         }
-        
+
 
         uid = parms.uid;
         lstupdts = parms.lstupdts;
         funcId = parms.funcId;
-        
+
         //console.log(name)
         //console.log(password)
         */
@@ -774,7 +774,7 @@ async function getRoles(uid,lstupdts,funcId){
             headers: { 'Content-Type': 'application/json' },
             //headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
             //headers: { 'Content-Type': 'application/json',
-            //'Content-Length': parms.length    
+            //'Content-Length': parms.length
         })
 
         result = await data.json();
@@ -818,10 +818,10 @@ async function getRoles(uid,lstupdts,funcId){
 
 app.post("/loginsvc", async function (req, res) {
     var result;
-
+console.log('API GW Loginsvc called');
     try {
         var url = await getURLs('logon');
-        //var url = "http://localhost:3001/loginsvc";        
+        //var url = "http://localhost:3001/loginsvc";
         console.log(url);
 
         var name;
@@ -846,7 +846,7 @@ app.post("/loginsvc", async function (req, res) {
             headers: { 'Content-Type': 'application/json' },
             //headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
             //headers: { 'Content-Type': 'application/json',
-            //'Content-Length': parms.length    
+            //'Content-Length': parms.length
         })
 
         result = await data.json();
@@ -870,7 +870,7 @@ app.post("/loginsvc", async function (req, res) {
         var funcId = "0";
         var roleStr = await getRoles(name, lastupdts, funcId);
         //console.log(roleStr)
-    
+
         var roleObj = JSON.parse(roleStr);
         var roles= {};
         var lstUpdTs = null;
@@ -903,7 +903,7 @@ app.post("/loginsvc", async function (req, res) {
             //res.status(500).end();
         }
 
-       
+
         var output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result, "name": JSON.parse(result).name, "hv_staff_id": JSON.parse(result).hv_staff_id, roles : roles });
         res.status(200).json(output);
 
@@ -921,7 +921,7 @@ app.post("/rolesvc", async function (req, res) {
 
     try {
         var url = await getURLs('roles');
-        //var url = "http://localhost:3001/loginsvc";        
+        //var url = "http://localhost:3001/loginsvc";
         console.log(url);
 
 
@@ -945,7 +945,7 @@ app.post("/rolesvc", async function (req, res) {
         uid = parms.uid;
         lstupdts = parms.lstupdts;
         funcId = parms.funcId;
-        
+
         //console.log(name)
         //console.log(password)
 
@@ -963,7 +963,7 @@ app.post("/rolesvc", async function (req, res) {
             headers: { 'Content-Type': 'application/json' },
             //headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
             //headers: { 'Content-Type': 'application/json',
-            //'Content-Length': parms.length    
+            //'Content-Length': parms.length
         })
 
         result = await data.json();
@@ -1000,7 +1000,7 @@ app.post("/getTables", async function (req, res) {
     var result;
 
     try {
-      
+
         const parm = [];
         parm[0] =  req.body.tableTag;
         const tmpData = await new DBase.DB.execSP("sps_getAttribTables", parm);
@@ -1017,7 +1017,7 @@ app.post("/getTables", async function (req, res) {
         console.log(e)
         res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
@@ -1028,7 +1028,7 @@ app.post("/GetAttribTable", async function (req, res) {
     try {
         console.log("sps_getAttribTableValues")
         console.log( req.body.hv_table_i)
-        
+
         const parm = [];
         parm[0] =  req.body.hv_table_i;
         const tmpData = await DBase.DB.execSP("sps_getAttribTableValues", parm);
@@ -1044,7 +1044,7 @@ app.post("/GetAttribTable", async function (req, res) {
     } catch (e) {
         res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
@@ -1068,7 +1068,7 @@ app.post("/delAttribTable", async function (req, res) {
     } catch (e) {
         res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
@@ -1094,7 +1094,7 @@ app.post("/updAttribTable", async function (req, res) {
     } catch (e) {
         res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
@@ -1119,7 +1119,7 @@ app.post("/insAttribTable", async function (req, res) {
     } catch (e) {
         res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
@@ -1131,7 +1131,7 @@ app.post('/ExportToExcel',async function (req, res) {
 
     conf.stylesXmlFile = "./styles.xml";
     conf.name="mysheet";
-    
+
     conf.cols = JSON.parse(JSON.stringify(req.body.cols));
     console.log(conf.cols)
 
@@ -1170,14 +1170,14 @@ app.post('/ExportToExcel',async function (req, res) {
     let colNameArr = Object.keys(resultObj.columns);
 
         if (resultObj.data[0].length > 0) {
-            
+
             arr=[];
-            for(var i=0;i<resultObj.data[0].length;i++){  
+            for(var i=0;i<resultObj.data[0].length;i++){
                 let a = [];
                 colNameArr.forEach((key,index) => {
                     //console.log(key)
                     //console.log(resultObj.data[0][i])
-                    //console.log(resultObj.data[0][i][key])                   
+                    //console.log(resultObj.data[0][i][key])
                     a.push(resultObj.data[0][i][key])
                   });
 
@@ -1185,7 +1185,7 @@ app.post('/ExportToExcel',async function (req, res) {
                 arr.push(a);
                 }
                 conf.rows=arr;
-           
+
                 //console.log(arr)
                 //conf.rows= resultObj.data[0];
     var result=nodeExcel.execute(conf);
@@ -1204,9 +1204,9 @@ app.post('/ExportToExcel',async function (req, res) {
 //     try {
 //         const parm = [];
 //         console.log("saveuserdetails");
-//         let parmstr= JSON.stringify(req.body.parms);  
+//         let parmstr= JSON.stringify(req.body.parms);
 //         let parms = JSON.parse(parmstr);
-        
+
 //         let keyArr = Object.keys(parms);
 //         console.log(parms["hv_first_name"]);
 //         parm[0] = parms["hv_first_name"];
@@ -1235,25 +1235,25 @@ app.post('/ExportToExcel',async function (req, res) {
 //         var output = JSON.stringify({ "message": "fail", "token": null, "result": e.message });
 //         res.status(200).json(output);
 //     }
-  
+
 // });
 
 const checkToken = async (token) => {
-   
+
     console.log('payload received', token);
     const tmpData,resultObj;
-    
+
     //Log the token in database
     try {
-        var parm = [];        
+        var parm = [];
         parm[0] = token;
-       
+
         tmpData =  await DBase.DB.execSP("sps_checktoken", parm);
         console.log(tmpData)
         resultObj = JSON.parse(tmpData);
         console.log(resultObj.data[0]);
         console.log(resultObj.data[0][0].validToken);
-       
+
     } catch (e) {
         console.log(e)
         //res.status(500).end();
@@ -1301,18 +1301,18 @@ app.post("/ExecSP",   async function (req, res, next) {
         //console.log((Date.now().valueOf()/ 1000))
         //console.log(new Date(originalDecoded.payload.exp * 1000))
 
-        
+
         if( Number(originalDecoded.payload.exp) < (Date.now().valueOf() / 1000)) {
             var output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result":"Token expired." });
             return res.status(400).json(output);
         }
-        
+
         var retVal = await checkToken(originalDecoded.payload.authID)
         if(!retVal) {
             var output = JSON.stringify({ "message": "fail", "token": null,"val": "-2", "result": "Not a valid token." });
             return res.status(400).json(output);
         }
-        
+
         //var output = JSON.stringify({ "message": "fail", "token": null, "result": "expired" });
         //res.status(200).json(output);
         /*
@@ -1336,13 +1336,13 @@ app.post("/ExecSP",   async function (req, res, next) {
 
         var roleStr = await getRoles(originalDecoded.payload.userId, lstUpdTs, funcId);
         console.log(roleStr)
-        var roleObj = JSON.parse(roleStr);       
+        var roleObj = JSON.parse(roleStr);
         if(roleObj.message == "ok"){
             if(roleObj.roles) {
                 roles = roleObj.roles;
                 lstUpdTs = roleObj.lstUpdTs;
                 originalDecoded.payload.lstUpdTs = lstUpdTs;
-                refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);            
+                refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);
             }
         } else {
             var output;
@@ -1353,22 +1353,22 @@ app.post("/ExecSP",   async function (req, res, next) {
                 output = JSON.stringify({ "message": "fail", "token": refreshedToken,"val": roleObj.val, "result": roleObj.result});
                 return res.status(400).json(output);
             }
-        }        
+        }
         //console.log(refreshedToken)
-        // new 'exp' value is later in the future. 
-        //console.log(JSON.stringify(jwt.decode(refreshed, { complete: true })));           
-        
-    } else {    
+        // new 'exp' value is later in the future.
+        //console.log(JSON.stringify(jwt.decode(refreshed, { complete: true })));
+
+    } else {
         // if there is no token
         // return an error
         var output = JSON.stringify({ "message": "fail", "token": null,"val": "-2", "result": "No token provided." });
         return res.status(400).json(output);
     }
-  
+
 
     let spName = req.body.spName;
-    let parmstr= JSON.stringify(req.body.parms);  
-    //console.log(parmstr) 
+    let parmstr= JSON.stringify(req.body.parms);
+    //console.log(parmstr)
     let parms = JSON.parse(parmstr);
     //console.log(parms)
     const parm = [];
@@ -1380,7 +1380,7 @@ app.post("/ExecSP",   async function (req, res, next) {
         // loop through the object, pushing values to the return array
         keyArr.forEach((key,index) => {
           //console.log(key);
-          parm[index] = parms[key];          
+          parm[index] = parms[key];
         });
 
         //parm[0] =  req.body.hv_table_i;
@@ -1401,7 +1401,7 @@ app.post("/ExecSP",   async function (req, res, next) {
         res.status(400).json(output);
         //res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
@@ -1439,18 +1439,18 @@ app.post("/ExecSPM",   async function (req, res, next) {
         //console.log((Date.now().valueOf()/ 1000))
         //console.log(new Date(originalDecoded.payload.exp * 1000))
 
-        
+
         if( Number(originalDecoded.payload.exp) < (Date.now().valueOf() / 1000)) {
             var output = JSON.stringify({ "message": "fail", "token": null, "val": "-2", "result":"Token expired." });
             return res.status(400).json(output);
         }
-        
+
         var retVal = await checkToken(originalDecoded.payload.authID)
         if(!retVal) {
             var output = JSON.stringify({ "message": "fail", "token": null,"val": "-2", "result": "Not a valid token." });
             return res.status(400).json(output);
         }
-        
+
         //var output = JSON.stringify({ "message": "fail", "token": null, "result": "expired" });
         //res.status(200).json(output);
         /*
@@ -1474,13 +1474,13 @@ app.post("/ExecSPM",   async function (req, res, next) {
 
         var roleStr = await getRoles(originalDecoded.payload.userId, lstUpdTs, funcId);
         console.log(roleStr)
-        var roleObj = JSON.parse(roleStr);       
+        var roleObj = JSON.parse(roleStr);
         if(roleObj.message == "ok"){
             if(roleObj.roles) {
                 roles = roleObj.roles;
                 lstUpdTs = roleObj.lstUpdTs;
                 originalDecoded.payload.lstUpdTs = lstUpdTs;
-                refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);            
+                refreshedToken = jwt.refresh(originalDecoded, Number(config.get(env + ".token").timeout || 300), jwtOptions.secretOrKey);
             }
         } else {
             var output;
@@ -1491,22 +1491,22 @@ app.post("/ExecSPM",   async function (req, res, next) {
                 output = JSON.stringify({ "message": "fail", "token": refreshedToken,"val": roleObj.val, "result": roleObj.result});
                 return res.status(400).json(output);
             }
-        }        
+        }
         //console.log(refreshedToken)
-        // new 'exp' value is later in the future. 
-        //console.log(JSON.stringify(jwt.decode(refreshed, { complete: true })));           
-        
-    } else {    
+        // new 'exp' value is later in the future.
+        //console.log(JSON.stringify(jwt.decode(refreshed, { complete: true })));
+
+    } else {
         // if there is no token
         // return an error
         var output = JSON.stringify({ "message": "fail", "token": null,"val": "-2", "result": "No token provided." });
         return res.status(400).json(output);
     }
-  
+
 
     let spName = req.body.spName;
-    let parmstr= JSON.stringify(req.body.parms);  
-    //console.log(parmstr) 
+    let parmstr= JSON.stringify(req.body.parms);
+    //console.log(parmstr)
     let parms = JSON.parse(parmstr);
     //console.log(parms)
     const parm = [];
@@ -1518,7 +1518,7 @@ app.post("/ExecSPM",   async function (req, res, next) {
         // loop through the object, pushing values to the return array
         keyArr.forEach((key,index) => {
           //console.log(key);
-          parm[index] = parms[key];          
+          parm[index] = parms[key];
         });
 
         //parm[0] =  req.body.hv_table_i;
@@ -1539,7 +1539,7 @@ app.post("/ExecSPM",   async function (req, res, next) {
         res.status(400).json(output);
         //res.status(500).end();
     }
-   
+
     //res.send(result);
 });
 
