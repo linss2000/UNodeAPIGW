@@ -95,7 +95,7 @@ function wrapMiddleware(fn) {
 passport.use(strategy);
 */
 //const env = require("env.js");
-var PORT = process.env.PORT || 3003;
+var PORT = process.env.PORT || 4003;
 var http = require('http');
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -453,7 +453,7 @@ app.post("/sendEmail", function (req, res) {
                         htm = "<div>Hi " + resultObj.data[0][0].hv_first_name + ",<br/><br/> We have received a request to reset your password. <br/> If you did not make this request, just ignore this message.";
                         htm += "Otherwise, you can reset your password using this link<br/><br/>";
                         //htm += "<a href=\'http://localhost:3000/changepwd/" + resultObj.data[0][0].hv_pwd_token + "\'> Click here to reset your password</a><br/>"
-                        htm += "<a href=\'http://hvs.selfip.net:3000/changepwd/" + resultObj.data[0][0].hv_pwd_token + "\'> Click here to reset your password</a><br/>";
+                        htm += "<a href=\'http://hvs.selfip.net:4000/changepwd/" + resultObj.data[0][0].hv_pwd_token + "\'> Click here to reset your password</a><br/>";
                         htm += "<br/>Thanks,<br/> The HVS Cadet Team";
                         console.log(htm);
                         mailOptions = {
@@ -902,7 +902,7 @@ app.post("/loginsvc", function (req, res) {
                     console.log(e_12);
                     return [3 /*break*/, 10];
                 case 10:
-                    output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result, "name": JSON.parse(result).name, roles: roles });
+                    output = JSON.stringify({ "message": "ok", "token": token, "result": JSON.parse(result).result, "name": JSON.parse(result).name, "hv_staff_id": JSON.parse(result).hv_staff_id, roles: roles });
                     res.status(200).json(output);
                     return [3 /*break*/, 12];
                 case 11:
