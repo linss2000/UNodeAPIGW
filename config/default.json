@@ -7,6 +7,9 @@
           "user": "hvssql",
           "password": "hvssql123!",
           "username":"hvssql",
+          "token" : {
+              "timeout": 300
+          },
           //"reconnect":true,
           "data_source_provider":"rds",
           "type":"mysql",
